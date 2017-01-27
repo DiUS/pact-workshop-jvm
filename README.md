@@ -156,7 +156,7 @@ BUILD SUCCESSFUL
 However, there is a problem with this integration point. Running the actual client against any of the providers results in
  a runtime exception!
 
-```
+```console
 $ ./gradlew :consumer:run
 :consumer:compileJava UP-TO-DATE
 :consumer:compileGroovy UP-TO-DATE
@@ -324,3 +324,132 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
 }
 ```
 
+## Step 4 - Verify pact against provider
+
+There are two ways of validating a pact file against a provider. The first is using a build tool (like Gradle) to
+execute the pact against the running service. The second is to write a pact verification test. We will be doing both
+in this step.
+
+First, we need to 'publish' the pact file from the consumer project. For this workshop, we will just copy it over to the
+provider project.
+
+### Verifying the springboot provider
+
+For the springboot provider, we are going to use Gradle to verify the pact file for us. We need to add the pact gradle 
+plugin and the spawn plugin to the project and configure them.
+
+*providers/springboot-provider/build.gradle:*
+
+```groovy
+plugins {
+  id "au.com.dius.pact" version "3.3.6"
+  id "com.wiredforcode.spawn" version "0.8.2"
+}
+```
+
+```groovy
+task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
+  command "java -jar ${jar.archivePath}"
+  ready 'Started MainApplication'
+}
+
+task stopProvider(type: KillProcessTask) {
+
+}
+
+pact {
+  serviceProviders {
+    'Our Provider' {
+      port = 8080
+
+      startProviderTask = startProvider
+      terminateProviderTask = stopProvider
+
+      hasPactWith('Our Little Consumer') {
+        pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
+      }
+    }
+  }
+}
+```
+
+Now if we copy the pact file from the consumer project and run our pact verification task, it should fail.
+
+```console
+$ ./gradlew :providers:springboot-provider:pactVerify
+Starting a Gradle Daemon (subsequent builds will be faster)
+:providers:springboot-provider:compileJava UP-TO-DATE
+:providers:springboot-provider:compileGroovy UP-TO-DATE
+:providers:springboot-provider:processResources UP-TO-DATE
+:providers:springboot-provider:classes UP-TO-DATE
+:providers:springboot-provider:findMainClass
+:providers:springboot-provider:jar
+:providers:springboot-provider:bootRepackage
+:providers:springboot-provider:assemble
+:providers:springboot-provider:startProvider
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v1.4.4.RELEASE)
+```
+
+... omitting lots of logs ...
+
+```console
+2017-01-27 16:04:36.817  INFO 17300 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 3.422 seconds (JVM running for 3.952)
+java -jar /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/libs/springboot-provider.jar is ready.
+:providers:springboot-provider:compileTestJava UP-TO-DATE
+:providers:springboot-provider:compileTestGroovy UP-TO-DATE
+:providers:springboot-provider:processTestResources UP-TO-DATE
+:providers:springboot-provider:testClasses UP-TO-DATE
+:providers:springboot-provider:pactVerify_Our Provider
+
+Verifying a pact between Our Little Consumer and Our Provider
+  [Using file /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
+  Given data count > 0
+         WARNING: State Change ignored as there is no stateChange URL
+  a request for json data
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+Failures:
+
+0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $.body.count -> Expected 100 but received 1000
+
+      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+
+        Diff:
+
+        {
+        -    "count": 100,
+        -    "date": "2013-08-16T15:31:20+10:00",
+        -    "test": "NO"
+        +    "count": 1000,
+        +    "test": "NO",
+        +    "validDate": "2017-01-27T16:04:37.686"
+        }
+
+
+:providers:springboot-provider:pactVerify_Our Provider FAILED
+:providers:springboot-provider:stopProvider
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+There were 1 pact failures for provider Our Provider
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+```
+
+The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. Secondly, and more importantly, the consumer was expecting a date field.

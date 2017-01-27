@@ -7,6 +7,13 @@ buildscript {
   }
 }
 
+plugins {
+  id "au.com.dius.pact" version "3.3.6"
+  id "com.wiredforcode.spawn" version "0.8.2"
+}
+
+import com.wiredforcode.gradle.spawn.*
+
 apply plugin: 'org.springframework.boot'
 
 dependencies {
@@ -15,4 +22,28 @@ dependencies {
   }
   compile("org.springframework.boot:spring-boot-starter-jetty")
   compile("org.springframework.boot:spring-boot-starter-actuator")
+}
+
+task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
+  command "java -jar ${jar.archivePath}"
+  ready 'Started MainApplication'
+}
+
+task stopProvider(type: KillProcessTask) {
+
+}
+
+pact {
+  serviceProviders {
+    'Our Provider' {
+      port = 8080
+
+      startProviderTask = startProvider
+      terminateProviderTask = stopProvider
+
+      hasPactWith('Our Little Consumer') {
+        pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
+      }
+    }
+  }
 }
