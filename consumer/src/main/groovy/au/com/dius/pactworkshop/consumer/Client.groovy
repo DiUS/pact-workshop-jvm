@@ -9,18 +9,22 @@ class Client {
   private http
 
   Client() {
-    http = new RESTClient('http://localhost:8080')
+
   }
 
-  def loadProviderJson() {
-    def response = http.get(path: '/provider.json', query: [validDate: LocalDateTime.now().toString()])
+  Client(String url) {
+    http = new RESTClient(url)
+  }
+
+  def loadProviderJson(LocalDateTime dateTime) {
+    def response = http.get(path: '/provider.json', query: [validDate: dateTime.toString()])
     if (response.success) {
       response.data
     }
   }
 
-  def fetchAndProcessData() {
-    def data = loadProviderJson()
+  def fetchAndProcessData(LocalDateTime dateTime) {
+    def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
     def date = ZonedDateTime.parse(data.date)

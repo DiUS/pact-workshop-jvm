@@ -1,4 +1,5 @@
 package au.com.dius.pactworkshop.consumer
 
-println new Client().fetchAndProcessData()
+import java.time.LocalDateTime
 
+println new Client('http://localhost:8080').fetchAndProcessData(LocalDateTime.now())

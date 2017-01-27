@@ -3,6 +3,7 @@ package au.com.dius.pactworkshop.consumer
 import groovyx.net.http.RESTClient
 import spock.lang.Specification
 
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
 class ClientSpec extends Specification {
@@ -24,7 +25,7 @@ class ClientSpec extends Specification {
     ]
 
     when:
-    def result = client.fetchAndProcessData()
+    def result = client.fetchAndProcessData(LocalDateTime.now())
 
     then:
     1 * mockHttp.get(_) >> [data: json, success: true]
