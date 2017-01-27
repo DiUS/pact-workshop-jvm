@@ -545,3 +545,43 @@ Failures:
 
       $.body.count -> Expected 100 but received 1000
 ```
+
+## Step 6 - Back to the client we go
+
+Let's correct the consumer test to handle any integer for `count` and use the correct field for the `date`. Then we need 
+to add a type matcher for `count` and change the field for the date to be `validDate`. We can also add a date expression 
+to make sure the `validDate` field is a valid date. This is important because we are parsing it.
+
+The updated consumer test is now:
+
+```groovy
+    provider {
+      serviceConsumer 'Our Little Consumer'
+      hasPactWith 'Our Provider'
+      port 1234
+
+      given('data count > 0')
+      uponReceiving('a request for json data')
+      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
+      willRespondWith(status: 200)
+      withBody {
+        test 'NO'
+        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssZZ", json.date)
+        count integer(json.count)
+      }
+    }
+```
+
+Running this test will fail until we fix the client. Here is the correct client function:
+
+```groovy
+  def fetchAndProcessData(LocalDateTime dateTime) {
+    def data = loadProviderJson(dateTime)
+    println "data=$data"
+    def value = 100 / data.count
+    def date = ZonedDateTime.parse(data.validDate)
+    println "value=$value"
+    println "date=$date"
+    [value, date]
+  }
+```

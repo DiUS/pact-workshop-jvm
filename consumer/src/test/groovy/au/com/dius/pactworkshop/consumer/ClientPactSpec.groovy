@@ -3,7 +3,6 @@ package au.com.dius.pactworkshop.consumer
 import au.com.dius.pact.consumer.PactVerified$
 import au.com.dius.pact.consumer.VerificationResult
 import au.com.dius.pact.consumer.groovy.PactBuilder
-import groovy.json.JsonOutput
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -41,7 +40,12 @@ class ClientPactSpec extends Specification {
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
-      willRespondWith(status: 200, body: JsonOutput.toJson(json), headers: ['Content-Type': 'application/json'])
+      willRespondWith(status: 200)
+      withBody {
+        test 'NO'
+        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssZZ", json.date)
+        count integer(json.count)
+      }
     }
 
     when:

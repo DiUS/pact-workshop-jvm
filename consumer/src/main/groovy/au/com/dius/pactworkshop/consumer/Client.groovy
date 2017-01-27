@@ -27,7 +27,7 @@ class Client {
     def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
-    def date = ZonedDateTime.parse(data.date)
+    def date = ZonedDateTime.parse(data.validDate)
     println "value=$value"
     println "date=$date"
     [value, date]
