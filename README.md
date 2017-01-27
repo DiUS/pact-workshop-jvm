@@ -585,3 +585,51 @@ Running this test will fail until we fix the client. Here is the correct client 
     [value, date]
   }
 ```
+
+Now the test passes. But we still have a problem with the date format, which we must fix in the provider. Running the
+client now fails because of that.
+
+```console
+$ ./gradlew :consumer:run
+Starting a Gradle Daemon, 1 busy Daemon could not be reused, use --status for details
+:consumer:compileJava UP-TO-DATE
+:consumer:compileGroovy UP-TO-DATE
+:consumer:processResources UP-TO-DATE
+:consumer:classes UP-TO-DATE
+:consumer:run
+data=[test:NO, validDate:2017-01-27T17:26:13.911, count:1000]
+Exception in thread "main" java.time.format.DateTimeParseException: Text '2017-01-27T17:26:13.911' could not be parsed at index 23
+        at java.time.format.DateTimeFormatter.parseResolved0(DateTimeFormatter.java:1949)
+        at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1851)
+        at java.time.ZonedDateTime.parse(ZonedDateTime.java:597)
+        at java.time.ZonedDateTime.parse(ZonedDateTime.java:582)
+        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
+        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.groovy:30)
+        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
+        at au.com.dius.pactworkshop.consumer.Consumer.run(Consumer.groovy:5)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
+        at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
+        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1218)
+        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1027)
+        at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
+        at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
+        at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
+        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
+        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
+:consumer:run FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':consumer:run'.
+> Process 'command '/usr/lib/jvm/java-8-openjdk-amd64/bin/java'' finished with non-zero exit value 1
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+```
