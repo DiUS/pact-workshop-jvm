@@ -452,4 +452,6 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 BUILD FAILED
 ```
 
-The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. Secondly, and more importantly, the consumer was expecting a date field.
+The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. 
+Secondly, and more importantly, the consumer was expecting a `date` field while the provider generates a `validDate`
+field. Also, the date formats are different.
