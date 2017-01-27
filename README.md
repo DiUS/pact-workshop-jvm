@@ -455,3 +455,93 @@ BUILD FAILED
 The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. 
 Secondly, and more importantly, the consumer was expecting a `date` field while the provider generates a `validDate`
 field. Also, the date formats are different.
+
+## Step 5 - Verify the provider with a test
+
+In this step we will verify the same pact file against the Dropwizard provider using a JUnit test. First we copy it over,
+or 'publish' it to our provider project.
+
+We add the pact provider junit jar and the dropwizard testing jar to our project dependencies, and then we can create a
+simple test to verify our provider.
+
+```groovy
+@RunWith(PactRunner)
+@Provider('Our Provider')
+@PactFolder('build/pacts')
+class PactVerificationTest {
+
+  @ClassRule
+  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication,
+    ResourceHelpers.resourceFilePath("main-app-config.yaml"))
+
+  @TestTarget
+  public final Target target = new HttpTarget(8080)
+
+  @State("data count > 0")
+  void dataCountGreaterThanZero() { }
+}
+```
+
+This test will start the dropwizard app (using the class rule), and then execute the pact requests (defined by the
+`@PactFolder` annotation) against the test target.
+
+Running this test will fail for the same reasons as in step 4.
+
+```console
+$ ./gradlew :providers:dropwizard-provider:test
+:providers:dropwizard-provider:compileJava UP-TO-DATE
+:providers:dropwizard-provider:compileGroovy UP-TO-DATE
+:providers:dropwizard-provider:processResources UP-TO-DATE
+:providers:dropwizard-provider:classes UP-TO-DATE
+:providers:dropwizard-provider:compileTestJava UP-TO-DATE
+:providers:dropwizard-provider:compileTestGroovy
+:providers:dropwizard-provider:processTestResources UP-TO-DATE
+:providers:dropwizard-provider:testClasses
+:providers:dropwizard-provider:test
+
+au.com.dius.pactworkshop.dropwizardprovider.PactVerificationTest > Our Little Consumer - a request for json data FAILED
+    java.lang.AssertionError
+
+1 test completed, 1 failed
+:providers:dropwizard-provider:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':providers:dropwizard-provider:test'.
+> There were failing tests. See the report at: file:///home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/dropwizard-provider/build/reports/tests/test/index.html
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+```
+
+The JUnit build report has the expected failures (standard output shown here).
+
+```
+Verifying a pact between Our Little Consumer and Our Provider
+  Given data count > 0
+  a request for json data
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+Failures:
+
+0) a request for json data returns a response which has a matching body
+      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+
+        Diff:
+
+            "test": "NO",
+        -    "date": "2013-08-16T15:31:20+10:00",
+        -    "count": 100
+        +    "validDate": "2017-01-27T16:53:32.291",
+        +    "count": 1000
+        }
+
+      $.body.count -> Expected 100 but received 1000
+```
