@@ -579,7 +579,7 @@ Running this test will fail until we fix the client. Here is the correct client 
     def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
-    def date = ZonedDateTime.parse(data.validDate)
+    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ"))
     println "value=$value"
     println "date=$date"
     [value, date]

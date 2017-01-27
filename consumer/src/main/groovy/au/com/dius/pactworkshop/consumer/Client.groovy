@@ -3,7 +3,8 @@ package au.com.dius.pactworkshop.consumer
 import groovyx.net.http.RESTClient
 
 import java.time.LocalDateTime
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class Client {
   private http
@@ -27,7 +28,7 @@ class Client {
     def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
-    def date = ZonedDateTime.parse(data.validDate)
+    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ"))
     println "value=$value"
     println "date=$date"
     [value, date]
