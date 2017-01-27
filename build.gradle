@@ -12,7 +12,11 @@ subprojects {
     compile 'org.slf4j:slf4j-api:1.7.22'
     compile 'org.codehaus.groovy:groovy-all:2.4.8:indy'
 
-    testCompile 'junit:junit:4.12'
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+      exclude group: 'org.codehaus.groovy'
+    }
+    testCompile 'cglib:cglib-nodep:3.2.4',
+      'org.objenesis:objenesis:2.4'
   }
 }
 

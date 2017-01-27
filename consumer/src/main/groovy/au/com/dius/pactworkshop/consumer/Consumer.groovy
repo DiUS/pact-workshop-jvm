@@ -1,4 +1,4 @@
 package au.com.dius.pactworkshop.consumer
 
-println new Client().loadProviderJson()
+println new Client().fetchAndProcessData()
 
