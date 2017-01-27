@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 @RestController
 class RootController {
@@ -14,7 +16,7 @@ class RootController {
     def validTime = LocalDateTime.parse(validDate)
     [
       test: 'NO',
-      validDate: LocalDateTime.now().toString(),
+      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ")),
       count: 1000
     ]
   }

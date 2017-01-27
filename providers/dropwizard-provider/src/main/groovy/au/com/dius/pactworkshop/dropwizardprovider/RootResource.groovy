@@ -6,6 +6,8 @@ import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 @Path("/provider.json")
 @Produces(MediaType.APPLICATION_JSON)
@@ -16,7 +18,7 @@ class RootResource {
     def valid_time = LocalDateTime.parse(validDate.get())
     [
       test: 'NO',
-      validDate: LocalDateTime.now().toString(),
+      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ")),
       count: 1000
     ]
   }

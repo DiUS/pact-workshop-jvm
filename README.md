@@ -633,3 +633,37 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 
 BUILD FAILED
 ```
+
+## Step 7 - Verify the providers again
+
+We need to 'publish' the consumer pact file to the provider projects again. Then, running the provider verification
+tests we get the expected failure about the date format.
+
+```
+Failures:
+
+0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $.body.validDate -> Expected '2017-01-27T17:33:52.293' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssZZ': Unable to parse the date: 2017-01-27T17:33:52.293
+```
+
+Lets fix the providers and then re-run the verification tests. Here is the corrected Dropwizard resource:
+
+```groovy
+@Path("/provider.json")
+@Produces(MediaType.APPLICATION_JSON)
+class RootResource {
+
+  @GET
+  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    def valid_time = LocalDateTime.parse(validDate.get())
+    [
+      test: 'NO',
+      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ")),
+      count: 1000
+    ]
+  }
+
+}
+```
+
+Running the verification against the providers now pass. Yay!
