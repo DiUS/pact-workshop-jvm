@@ -1,0 +1,23 @@
+apply plugin: 'application'
+
+mainClassName = 'au.com.dius.pactworkshop.dropwizardprovider.MainApplication'
+
+dependencies {
+  compile 'io.dropwizard:dropwizard-core:1.0.5'
+}
+
+jar {
+  manifest {
+    attributes("Class-Path": (configurations.compile + configurations.runtime).collect { it.getName() }.join(' ') ,
+      "Main-Class": mainClassName
+    )
+  }
+}
+
+run {
+  if ( project.hasProperty("appArgs") ) {
+    args appArgs.split(',')
+  } else {
+    args 'server'
+  }
+}
