@@ -70,7 +70,7 @@ This providers expects a `validDate` parameter in HTTP date format, and then ret
 
 Running the client with either provider works nicely.
 
-```
+```console
 $ ./gradlew :consumer:run
 Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status for details
 :consumer:compileJava UP-TO-DATE
@@ -137,7 +137,7 @@ class ClientSpec extends Specification {
 
 Let's run this spec and see it all pass:
 
-```
+```console
 $ ./gradlew :consumer:check
 :consumer:compileJava UP-TO-DATE
 :consumer:compileGroovy
@@ -202,3 +202,125 @@ FAILURE: Build failed with an exception.
 
 The provider returns a `validDate` while the consumer is 
 trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
+
+## Step 3 - Pact to the rescue
+
+Let us add Pact to the project and write a consumer pact test.
+
+*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy*
+
+```groovy
+class ClientPactSpec extends Specification {
+
+  private Client client
+  private LocalDateTime date
+  private PactBuilder provider
+
+  def setup() {
+    client = new Client('http://localhost:1234')
+    date = LocalDateTime.now()
+    provider = new PactBuilder()
+    provider {
+      serviceConsumer 'Our Little Consumer'
+      hasPactWith 'Our Provider'
+      port 1234
+    }
+  }
+
+  def 'Pact with our provider'() {
+    given:
+    def json = [
+      test: 'NO',
+      date: '2013-08-16T15:31:20+10:00',
+      count: 100
+    ]
+    provider {
+      serviceConsumer 'Our Little Consumer'
+      hasPactWith 'Our Provider'
+      port 1234
+
+      given('data count > 0')
+      uponReceiving('a request for json data')
+      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
+      willRespondWith(status: 200, body: JsonOutput.toJson(json), headers: ['Content-Type': 'application/json'])
+    }
+
+    when:
+    def result
+    VerificationResult pactResult = provider.run {
+      result = client.fetchAndProcessData(date)
+    }
+
+    then:
+    pactResult == PactVerified$.MODULE$
+    result == [1, ZonedDateTime.parse(json.date)]
+  }
+
+}
+```
+
+This test starts a mock server on port 1234 that pretends to be our provider. To get this to work we needed to update
+our consumer to pass in the URL of the provider. We also updated the `fetchAndProcessData` method to pass in the
+query parameter.
+
+Running this spec still passes, but it creates a pact file which we can use to validate our assumptions on the provider side.
+
+```console
+$ ./gradlew :consumer:check
+:consumer:compileJava UP-TO-DATE
+:consumer:compileGroovy UP-TO-DATE
+:consumer:processResources UP-TO-DATE
+:consumer:classes UP-TO-DATE
+:consumer:compileTestJava UP-TO-DATE
+:consumer:compileTestGroovy UP-TO-DATE
+:consumer:processTestResources UP-TO-DATE
+:consumer:testClasses UP-TO-DATE
+:consumer:test
+:consumer:check
+
+BUILD SUCCESSFUL
+```
+
+Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json*):
+
+```json
+{
+    "provider": {
+        "name": "Our Provider"
+    },
+    "consumer": {
+        "name": "Our Little Consumer"
+    },
+    "interactions": [
+        {
+            "description": "a request for json data",
+            "request": {
+                "method": "GET",
+                "path": "/provider.json",
+                "query": "validDate=2017-01-27T15%3A01%3A38.027"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": {
+                    "test": "NO",
+                    "date": "2013-08-16T15:31:20+10:00",
+                    "count": 100
+                }
+            },
+            "providerState": "data count > 0"
+        }
+    ],
+    "metadata": {
+        "pact-specification": {
+            "version": "2.0.0"
+        },
+        "pact-jvm": {
+            "version": "3.3.6"
+        }
+    }
+}
+```
+
