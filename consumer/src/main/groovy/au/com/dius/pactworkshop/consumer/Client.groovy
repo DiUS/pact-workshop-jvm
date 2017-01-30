@@ -28,7 +28,7 @@ class Client {
     def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
-    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ"))
+    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
     println "value=$value"
     println "date=$date"
     [value, date]
