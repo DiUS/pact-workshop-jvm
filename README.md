@@ -566,7 +566,7 @@ The updated consumer test is now:
       willRespondWith(status: 200)
       withBody {
         test 'NO'
-        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssZZ", json.date)
+        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssXXX", json.date)
         count integer(json.count)
       }
     }
@@ -579,7 +579,7 @@ Running this test will fail until we fix the client. Here is the correct client 
     def data = loadProviderJson(dateTime)
     println "data=$data"
     def value = 100 / data.count
-    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ"))
+    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
     println "value=$value"
     println "date=$date"
     [value, date]
