@@ -16,7 +16,7 @@ class RootController {
     def validTime = LocalDateTime.parse(validDate)
     [
       test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ")),
+      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
       count: 1000
     ]
   }

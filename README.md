@@ -643,7 +643,7 @@ tests we get the expected failure about the date format.
 Failures:
 
 0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body.validDate -> Expected '2017-01-27T17:33:52.293' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssZZ': Unable to parse the date: 2017-01-27T17:33:52.293
+      $.body.validDate -> Expected '2017-01-27T17:33:52.293' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2017-01-27T17:33:52.293
 ```
 
 Lets fix the providers and then re-run the verification tests. Here is the corrected Dropwizard resource:
@@ -658,7 +658,7 @@ class RootResource {
     def valid_time = LocalDateTime.parse(validDate.get())
     [
       test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ")),
+      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
       count: 1000
     ]
   }
