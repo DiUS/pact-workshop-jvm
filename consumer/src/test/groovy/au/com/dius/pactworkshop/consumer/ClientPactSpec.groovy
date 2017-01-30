@@ -6,7 +6,8 @@ import au.com.dius.pact.consumer.groovy.PactBuilder
 import spock.lang.Specification
 
 import java.time.LocalDateTime
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class ClientPactSpec extends Specification {
 
@@ -43,7 +44,7 @@ class ClientPactSpec extends Specification {
       willRespondWith(status: 200)
       withBody {
         test 'NO'
-        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssZZ", json.date)
+        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssXXX", json.date)
         count integer(json.count)
       }
     }
@@ -56,7 +57,7 @@ class ClientPactSpec extends Specification {
 
     then:
     pactResult == PactVerified$.MODULE$
-    result == [1, ZonedDateTime.parse(json.date)]
+    result == [1, OffsetDateTime.parse(json.date, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx"))]
   }
 
 }
