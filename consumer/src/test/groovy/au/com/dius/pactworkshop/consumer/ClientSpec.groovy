@@ -30,7 +30,7 @@ class ClientSpec extends Specification {
 
     then:
     1 * mockHttp.get(_) >> [data: json, success: true]
-    result == [1, OffsetDateTime.parse(json.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ"))]
+    result == [1, OffsetDateTime.parse(json.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))]
   }
 
 }
