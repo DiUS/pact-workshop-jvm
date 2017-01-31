@@ -667,3 +667,92 @@ class RootResource {
 ```
 
 Running the verification against the providers now pass. Yay!
+
+Step 8 - Test for the missing query parameter
+
+In this step we are going to add a test for the case where the query parameter is missing or invalid. We do this by 
+adding additional tests and expectations to the consumer pact test. Our client code needs to be modified slightly to
+be able to pass invalid dates in, and if the date parameter is null, don't include it in the request.
+
+Here are the two additional tests:
+
+*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy:*
+
+```groovy
+  def 'handles a missing date parameter'() {
+      given:
+      provider {
+        given('data count > 0')
+        uponReceiving('a request with a missing date parameter')
+        withAttributes(path: '/provider.json')
+        willRespondWith(status: 400, body: '"valid_date is required"', headers: ['Content-Type': 'application/json'])
+      }
+  
+      when:
+      VerificationResult pactResult = provider.run {
+        client.fetchAndProcessData(null)
+      }
+  
+      then:
+      pactResult == PactVerified$.MODULE$
+    }
+  
+    def 'handles an invalid date parameter'() {
+      given:
+      provider {
+        given('data count > 0')
+        uponReceiving('a request with an invalid date parameter')
+        withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
+        willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
+      }
+  
+      when:
+      def result
+      VerificationResult pactResult = provider.run {
+        result = client.fetchAndProcessData('This is not a date')
+      }
+  
+      then:
+      pactResult == PactVerified$.MODULE$
+    }
+```
+
+After running our specs, the pact file will have 2 new interactions.
+
+*consumer/build/pacts/Our Little Consumer-Our Provider.json:*
+
+```json
+[
+  {
+      "description": "a request with a missing date parameter",
+      "request": {
+          "method": "GET",
+          "path": "/provider.json"
+      },
+      "response": {
+          "status": 400,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "valid_date is required"
+      },
+      "providerState": "data count > 0"
+  },
+  {
+      "description": "a request with an invalid date parameter",
+      "request": {
+          "method": "GET",
+          "path": "/provider.json",
+          "query": "validDate=This+is+not+a+date"
+      },
+      "response": {
+          "status": 400,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "'This is not a date' is not a date"
+      },
+      "providerState": "data count > 0"
+  }
+]
+```

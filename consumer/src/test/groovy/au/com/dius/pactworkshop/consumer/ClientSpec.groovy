@@ -26,7 +26,7 @@ class ClientSpec extends Specification {
     ]
 
     when:
-    def result = client.fetchAndProcessData(LocalDateTime.now())
+    def result = client.fetchAndProcessData(LocalDateTime.now().toString())
 
     then:
     1 * mockHttp.get(_) >> [data: json, success: true]

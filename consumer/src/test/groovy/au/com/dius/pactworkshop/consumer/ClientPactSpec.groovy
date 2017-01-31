@@ -1,5 +1,7 @@
 package au.com.dius.pactworkshop.consumer
 
+import au.com.dius.pact.consumer.PactError
+import au.com.dius.pact.consumer.PactError$
 import au.com.dius.pact.consumer.PactVerified$
 import au.com.dius.pact.consumer.VerificationResult
 import au.com.dius.pact.consumer.groovy.PactBuilder
@@ -34,10 +36,6 @@ class ClientPactSpec extends Specification {
       count: 100
     ]
     provider {
-      serviceConsumer 'Our Little Consumer'
-      hasPactWith 'Our Provider'
-      port 1234
-
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
@@ -52,12 +50,49 @@ class ClientPactSpec extends Specification {
     when:
     def result
     VerificationResult pactResult = provider.run {
-      result = client.fetchAndProcessData(date)
+      result = client.fetchAndProcessData(date.toString())
     }
 
     then:
     pactResult == PactVerified$.MODULE$
     result == [1, OffsetDateTime.parse(json.date, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx"))]
+  }
+
+  def 'handles a missing date parameter'() {
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with a missing date parameter')
+      withAttributes(path: '/provider.json')
+      willRespondWith(status: 400, body: '"valid_date is required"', headers: ['Content-Type': 'application/json'])
+    }
+
+    when:
+    VerificationResult pactResult = provider.run {
+      client.fetchAndProcessData(null)
+    }
+
+    then:
+    pactResult == PactVerified$.MODULE$
+  }
+
+  def 'handles an invalid date parameter'() {
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with an invalid date parameter')
+      withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
+      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
+    }
+
+    when:
+    def result
+    VerificationResult pactResult = provider.run {
+      result = client.fetchAndProcessData('This is not a date')
+    }
+
+    then:
+    pactResult == PactVerified$.MODULE$
   }
 
 }
