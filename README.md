@@ -668,7 +668,7 @@ class RootResource {
 
 Running the verification against the providers now pass. Yay!
 
-Step 8 - Test for the missing query parameter
+## Step 8 - Test for the missing query parameter
 
 In this step we are going to add a test for the case where the query parameter is missing or invalid. We do this by 
 adding additional tests and expectations to the consumer pact test. Our client code needs to be modified slightly to
