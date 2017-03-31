@@ -759,7 +759,7 @@ After running our specs, the pact file will have 2 new interactions.
 
 ## Step 9 - Verify the provider with the missing/invalid date query parameter
    
-Let us run this updated pact file with our providerS. We get a 500 response as the provider can't handle the missing 
+Let us run this updated pact file with our providers. We get a 500 response as the provider can't handle the missing 
 or incorrect date.
 
 Here is the dropwizard test output:
