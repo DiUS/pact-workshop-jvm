@@ -13,12 +13,20 @@ class RootController {
 
   @RequestMapping("/provider.json")
   Map providerJson(@RequestParam(required = false) String validDate) {
-    def validTime = LocalDateTime.parse(validDate)
-    [
-      test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-      count: 1000
-    ]
+    if (validDate) {
+      try {
+        def valid_time = LocalDateTime.parse(validDate)
+        [
+          test: 'NO',
+          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+          count: 1000
+        ]
+      } catch (e) {
+        throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
   }
 
 }
