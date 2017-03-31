@@ -953,3 +953,49 @@ class RootControllerAdvice extends ResponseEntityExceptionHandler {
 ```
 
 Now running the `pactVerify` is all successful.
+
+## Step 11 - Provider states
+
+We have one final thing to test for. If the provider ever returns a count of zero, we will get a division by
+zero error in our client. This is an important bit of information to add to our contract. Let us start with a
+consumer test for this.
+
+```groovy
+  def 'when there is no data'() {
+    given:
+    provider {
+      given('data count == 0')
+      uponReceiving('a request for json data')
+      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
+      willRespondWith(status: 404)
+    }
+
+    when:
+    def result
+    VerificationResult pactResult = provider.run {
+      result = client.fetchAndProcessData(date.toString())
+    }
+
+    then:
+    pactResult == PactVerified$.MODULE$
+  }
+```
+
+This adds a new interaction to the pact file:
+
+```json
+
+  {
+      "description": "a request for json data",
+      "request": {
+          "method": "GET",
+          "path": "/provider.json",
+          "query": "validDate=2017-03-31T13%3A45%3A38.842"
+      },
+      "response": {
+          "status": 404
+      },
+      "providerState": "data count == 0"
+  }
+
+```

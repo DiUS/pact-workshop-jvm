@@ -95,4 +95,23 @@ class ClientPactSpec extends Specification {
     pactResult == PactVerified$.MODULE$
   }
 
+  def 'when there is no data'() {
+    given:
+    provider {
+      given('data count == 0')
+      uponReceiving('a request for json data')
+      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
+      willRespondWith(status: 404)
+    }
+
+    when:
+    def result
+    VerificationResult pactResult = provider.run {
+      result = client.fetchAndProcessData(date.toString())
+    }
+
+    then:
+    pactResult == PactVerified$.MODULE$
+  }
+
 }
