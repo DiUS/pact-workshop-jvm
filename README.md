@@ -857,3 +857,8 @@ BUILD FAILED
 ```
 
 Time to update the providers to handle these cases.
+
+## Step 10 - Update the providers to handle the missing/invalid query parameters
+
+Let's fix our providers so they generate the correct responses for the query parameters.
+

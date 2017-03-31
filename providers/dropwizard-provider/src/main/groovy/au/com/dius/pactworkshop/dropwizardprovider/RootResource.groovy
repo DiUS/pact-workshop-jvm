@@ -15,12 +15,20 @@ class RootResource {
 
   @GET
   Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-      count: 1000
-    ]
+    if (validDate.present) {
+      try {
+        def valid_time = LocalDateTime.parse(validDate.get())
+        [
+          test: 'NO',
+          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+          count: 1000
+        ]
+      } catch (e) {
+        throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
   }
 
 }
