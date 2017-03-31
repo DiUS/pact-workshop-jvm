@@ -862,3 +862,51 @@ Time to update the providers to handle these cases.
 
 Let's fix our providers so they generate the correct responses for the query parameters.
 
+### Dropwizard provider
+
+The Dropwizard root resource gets updated to check if the parameter has been passed, and handle the date parse exception
+if it is invalid. Two new exceptions get thrown for these cases.
+
+```groovy
+  @GET
+  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    if (validDate.present) {
+      try {
+        def valid_time = LocalDateTime.parse(validDate.get())
+        [
+          test: 'NO',
+          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+          count: 1000
+        ]
+      } catch (e) {
+        throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
+  }
+```
+
+Next step is to create exception mappers for the new exceptions, and register them with the Dropwizard environment.
+
+```groovy
+class InvalidQueryParameterExceptionMapper implements ExceptionMapper<InvalidQueryParameterException> {
+  @Override
+  Response toResponse(InvalidQueryParameterException exception) {
+    Response.status(Response.Status.BAD_REQUEST)
+      .type(MediaType.APPLICATION_JSON_TYPE)
+      .entity(JsonOutput.toJson(exception.message))
+      .build()
+  }
+}
+```
+
+The main provider run method becomes:
+
+```groovy
+  void run(ServiceConfig configuration, Environment environment) {
+    environment.jersey().register(new InvalidQueryParameterExceptionMapper())
+    environment.jersey().register(new QueryParameterRequiredExceptionMapper())
+    environment.jersey().register(new RootResource())
+  }
+```
