@@ -42,9 +42,7 @@ pact {
       terminateProviderTask = stopProvider
       stateChangeUrl = url('http://localhost:8080/pactStateChange')
 
-      hasPactWith('Our Little Consumer') {
-        pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
-      }
+      hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
     }
   }
 }

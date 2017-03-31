@@ -25,3 +25,8 @@ run {
     args 'server'
   }
 }
+
+test {
+  systemProperty 'pactBrokerUser', pactBrokerUser
+  systemProperty 'pactBrokerPassword', pactBrokerPassword
+}

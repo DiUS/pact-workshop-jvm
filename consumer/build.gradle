@@ -5,6 +5,7 @@ plugins {
 apply plugin: 'application'
 
 mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
+version = 0
 
 dependencies {
   compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'

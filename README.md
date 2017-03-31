@@ -1192,5 +1192,95 @@ Running the Gradle pact verification now passes.
 We've been publishing our pacts from the consumer project by coping the files over to the provider project, but we can
 use a Pact Broker to do this instead.
 
+### Consumer
+
 First, in the consumer project we need to tell the Gradle Pact plugin about our broker.
 
+```groovy
+plugins {
+  id "au.com.dius.pact" version "3.3.7"
+}
+
+apply plugin: 'application'
+
+mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
+version = 0
+
+dependencies {
+  compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+}
+
+pact {
+  publish {
+    pactBrokerUrl = "https://$pactBrokerUser:$pactBrokerPassword@test.pact.dius.com.au"
+  }
+}
+```
+
+Now, we can run `./gradlew consumer:pactPublish` after running the consumer tests to have the generated pact file 
+published to the broker. Afterwards, you can navigate to the Pact Broker URL and see the published pact there.
+
+### Dropwizard provider
+
+In the `PactVerificationTest` we can change the source we fetch pacts from by using a `@PactBroker` annotation instead
+of the `@PactFolder` one. We also need to pass the username and property through to the test.
+
+Updated gradle build file:
+
+```groovy
+test {
+  systemProperty 'pactBrokerUser', pactBrokerUser
+  systemProperty 'pactBrokerPassword', pactBrokerPassword
+}
+```
+
+Updated test:
+
+```groovy
+@RunWith(PactRunner)
+@Provider('Our Provider')
+@PactBroker(host = 'test.pact.dius.com.au', protocol = 'https', port = "443",
+  authentication = @PactBrokerAuth(username = '${pactBrokerUser}', password = '${pactBrokerPassword}'))
+class PactVerificationTest {
+
+  @ClassRule
+  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication,
+    ResourceHelpers.resourceFilePath("main-app-config.yaml"))
+
+  @TestTarget
+  public final Target target = new HttpTarget(8080)
+
+  @State("data count > 0")
+  void dataCountGreaterThanZero() {
+    DataStore.instance.dataCount = 1000
+  }
+
+  @State("data count == 0")
+  void dataCountZero() {
+    DataStore.instance.dataCount = 0
+  }
+}
+```
+
+### Springboot provider
+
+The springboot provider is using the Gradle plugin, so we can just configure its build to fetch the pacts from the 
+broker.
+
+Updated build file:
+
+```groovy
+pact {
+  serviceProviders {
+    'Our Provider' {
+      port = 8080
+
+      startProviderTask = startProvider
+      terminateProviderTask = stopProvider
+      stateChangeUrl = url('http://localhost:8080/pactStateChange')
+
+      hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
+    }
+  }
+}
+```
