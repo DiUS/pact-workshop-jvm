@@ -685,7 +685,7 @@ Here are the two additional tests:
         given('data count > 0')
         uponReceiving('a request with a missing date parameter')
         withAttributes(path: '/provider.json')
-        willRespondWith(status: 400, body: '"valid_date is required"', headers: ['Content-Type': 'application/json'])
+        willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
       }
   
       when:
@@ -734,7 +734,7 @@ After running our specs, the pact file will have 2 new interactions.
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "valid_date is required"
+          "body": "\"validDate is required\""
       },
       "providerState": "data count > 0"
   },
@@ -750,7 +750,7 @@ After running our specs, the pact file will have 2 new interactions.
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "'This is not a date' is not a date"
+          "body": "\"'This is not a date' is not a date\""
       },
       "providerState": "data count > 0"
   }
