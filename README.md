@@ -756,3 +756,104 @@ After running our specs, the pact file will have 2 new interactions.
   }
 ]
 ```
+
+## Step 9 - Verify the provider with the missing/invalid date query parameter
+   
+Let us run this updated pact file with our providerS. We get a 500 response as the provider can't handle the missing 
+or incorrect date.
+
+Here is the dropwizard test output:
+
+```console
+Verifying a pact between Our Little Consumer and Our Provider
+  Given data count > 0
+  a request with a missing date parameter
+      returns a response which
+        has status code 400 (FAILED)
+        includes headers
+          "Content-Type" with value "application/json" (OK)
+        has a matching body (FAILED)
+  
+  Failures:
+  
+  0) a request with a missing date parameter returns a response which has a matching body
+        $.body -> Expected 'valid_date is required' but received Map(code -> 500, message -> There was an error processing your request. It has been logged (ID 57cd4a2eae1d5293).)
+  
+  
+  1) a request with a missing date parameter returns a response which has status code 400
+        assert expectedStatus == actualStatus
+               |              |  |
+               400            |  500
+                              false
+  
+```
+
+and the springboot build output:
+
+```console
+:providers:springboot-provider:pactVerify_Our Provider
+
+Verifying a pact between Our Little Consumer and Our Provider
+  [Using file /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
+  Given data count > 0
+         WARNING: State Change ignored as there is no stateChange URL
+  a request for json data
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (OK)
+  Given data count > 0
+         WARNING: State Change ignored as there is no stateChange URL
+  a request with a missing date parameter
+    returns a response which
+      has status code 400 (FAILED)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+  Given data count > 0
+         WARNING: State Change ignored as there is no stateChange URL
+  a request with an invalid date parameter
+    returns a response which
+      has status code 400 (FAILED)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+Failures:
+
+0) Verifying a pact between Our Little Consumer and Our Provider - a request with a missing date parameter Given data count > 0 returns a response which has status code 400
+      assert expectedStatus == actualStatus
+             |              |  |
+             400            |  500
+                            false
+
+1) Verifying a pact between Our Little Consumer and Our Provider - a request with a missing date parameter Given data count > 0 returns a response which has a matching body
+      $.body -> Expected 'valid_date is required' but received Map(path -> /provider.json, timestamp -> 1490922210835, exception -> java.lang.NullPointerException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.lang.NullPointerException: text)
+
+
+2) Verifying a pact between Our Little Consumer and Our Provider - a request with an invalid date parameter Given data count > 0 returns a response which has status code 400
+      assert expectedStatus == actualStatus
+             |              |  |
+             400            |  500
+                            false
+
+3) Verifying a pact between Our Little Consumer and Our Provider - a request with an invalid date parameter Given data count > 0 returns a response which has a matching body
+      $.body -> Expected ''This is not a date' is not a date' but received Map(path -> /provider.json, timestamp -> 1490922210891, exception -> java.time.format.DateTimeParseException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.time.format.DateTimeParseException: Text 'This is not a date' could not be parsed at index 0)
+
+
+:providers:springboot-provider:pactVerify_Our Provider FAILED
+:providers:springboot-provider:stopProvider
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+There were 4 pact failures for provider Our Provider
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+```
+
+Time to update the providers to handle these cases.
