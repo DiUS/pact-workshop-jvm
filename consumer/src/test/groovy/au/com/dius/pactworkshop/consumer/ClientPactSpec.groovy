@@ -64,7 +64,7 @@ class ClientPactSpec extends Specification {
       given('data count > 0')
       uponReceiving('a request with a missing date parameter')
       withAttributes(path: '/provider.json')
-      willRespondWith(status: 400, body: '"valid_date is required"', headers: ['Content-Type': 'application/json'])
+      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
     }
 
     when:
