@@ -25,7 +25,7 @@ dependencies {
 }
 
 task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
-  command "java -jar ${jar.archivePath}"
+  command "java -Dspring.profiles.active=test -jar ${jar.archivePath}"
   ready 'Started MainApplication'
 }
 
@@ -40,6 +40,7 @@ pact {
 
       startProviderTask = startProvider
       terminateProviderTask = stopProvider
+      stateChangeUrl = url('http://localhost:8080/pactStateChange')
 
       hasPactWith('Our Little Consumer') {
         pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")

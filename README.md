@@ -1071,3 +1071,118 @@ Now we can change the data store value in our test based on the provider state.
   }
 ```
 
+Running the test passes.
+
+### Springboot provider
+
+Our Springboot provider is being verified by the Pact Gradle verification task, which requires the provider to be
+running in the background. We can not directly manipulate it. The Gradle task has a state change URL feature that can
+help us here. This is basically a special URL that will receive the state that the provider needs to be in.
+
+First, lets enable the state change URL handling in the build gradle file.
+
+```groovy
+pact {
+  serviceProviders {
+    'Our Provider' {
+      port = 8080
+
+      startProviderTask = startProvider
+      terminateProviderTask = stopProvider
+      stateChangeUrl = url('http://localhost:8080/pactStateChange')
+
+      hasPactWith('Our Little Consumer') {
+        pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
+      }
+    }
+  }
+}
+```
+
+Now we create a new controller to handle this. As this controller is only for our test, we make sure it is only available
+in the test profile. We also need to make sure the app runs in the test profile by adding a parameter to the start task.
+
+```groovy
+task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
+  command "java -Dspring.profiles.active=test -jar ${jar.archivePath}"
+  ready 'Started MainApplication'
+}
+```
+
+Here is the state change controller:
+
+```groovy
+@RestController
+@Profile("test")
+class StateChangeController {
+
+  @RequestMapping(value = "/pactStateChange", method = RequestMethod.POST)
+  void providerState(@RequestBody Map body) {
+    switch (body.state) {
+      case 'data count > 0':
+        DataStore.instance.dataCount = 1000
+        break
+      case 'data count == 0':
+        DataStore.instance.dataCount = 0
+        break
+    }
+  }
+
+}
+```
+
+This controller will change the value of the datastore. We then use the datastore in our normal controller.
+
+```groovy
+@Singleton
+class DataStore {
+  int dataCount = 1000
+}
+```
+
+```groovy
+  @RequestMapping("/provider.json")
+  Map providerJson(@RequestParam(required = false) String validDate) {
+    if (validDate) {
+      if (DataStore.instance.dataCount > 0) {
+        try {
+          def valid_time = LocalDateTime.parse(validDate)
+          [
+            test     : 'NO',
+            validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+            count    : DataStore.instance.dataCount
+          ]
+        } catch (e) {
+          throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+        }
+      } else {
+        throw new NoDataException()
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
+  }
+```
+
+and update our controller advice to return the 404 response when a `NoDataException` is raised.
+
+```groovy
+@ControllerAdvice(basePackageClasses = RootController)
+class RootControllerAdvice extends ResponseEntityExceptionHandler {
+
+  @ExceptionHandler([InvalidQueryParameterException, QueryParameterRequiredException])
+  @ResponseBody
+  ResponseEntity handleControllerException(HttpServletRequest request, Throwable ex) {
+    new ResponseEntity(JsonOutput.toJson(ex.message), HttpStatus.BAD_REQUEST)
+  }
+
+  @ExceptionHandler(NoDataException)
+  @ResponseBody
+  ResponseEntity handleNoDataException(HttpServletRequest request, Throwable ex) {
+    new ResponseEntity(HttpStatus.NOT_FOUND)
+  }
+
+}
+```
+
+Running the Gradle pact verification now passes.
