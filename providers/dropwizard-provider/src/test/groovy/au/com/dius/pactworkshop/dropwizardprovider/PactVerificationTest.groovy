@@ -25,5 +25,12 @@ class PactVerificationTest {
   public final Target target = new HttpTarget(8080)
 
   @State("data count > 0")
-  void dataCountGreaterThanZero() { }
+  void dataCountGreaterThanZero() {
+    DataStore.instance.dataCount = 1000
+  }
+
+  @State("data count == 0")
+  void dataCountZero() {
+    DataStore.instance.dataCount = 0
+  }
 }

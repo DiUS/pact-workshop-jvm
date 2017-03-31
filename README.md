@@ -999,3 +999,15 @@ This adds a new interaction to the pact file:
   }
 
 ```
+
+## Step 12 - provider states for the providers
+
+To be able to verify our providers, we need to be able to change the data that the provider returns. There are different
+ways of doing this depending on how the provider is being verified.
+
+
+### Dropwizard provider
+
+The dropwizard provider is being verified by a test, so we can setup methods annotated with the state and then modify the
+controller appropriately.
+
