@@ -1009,5 +1009,65 @@ ways of doing this depending on how the provider is being verified.
 ### Dropwizard provider
 
 The dropwizard provider is being verified by a test, so we can setup methods annotated with the state and then modify the
-controller appropriately.
+controller appropriately. First, we need some data store that we could manipulate. For out case, we are just going to
+use a singleton class, but in a real project you would probably use a database.
+
+```groovy
+@Singleton
+class DataStore {
+  int dataCount = 1000
+}
+```
+
+Next, we update out root resource to use the value from the data store, and throw an exception if there is no data.
+
+```groovy
+  @GET
+  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    if (validDate.present) {
+      if (DataStore.instance.dataCount > 0) {
+        try {
+          def valid_time = LocalDateTime.parse(validDate.get())
+          [
+            test     : 'NO',
+            validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+            count    : DataStore.instance.dataCount
+          ]
+        } catch (e) {
+          throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+        }
+      } else {
+        throw new NoDataException()
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
+  }
+```
+
+We do the same exception mapping for the new exception as we did before.
+
+```groovy
+class NoDataExceptionMapper implements ExceptionMapper<NoDataException> {
+  @Override
+  Response toResponse(NoDataException exception) {
+    Response.status(Response.Status.NOT_FOUND)
+      .build()
+  }
+}
+```
+
+Now we can change the data store value in our test based on the provider state.
+
+```groovy
+  @State("data count > 0")
+  void dataCountGreaterThanZero() {
+    DataStore.instance.dataCount = 1000
+  }
+
+  @State("data count == 0")
+  void dataCountZero() {
+    DataStore.instance.dataCount = 0
+  }
+```
 
