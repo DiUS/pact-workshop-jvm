@@ -1186,3 +1186,11 @@ class RootControllerAdvice extends ResponseEntityExceptionHandler {
 ```
 
 Running the Gradle pact verification now passes.
+
+# Step 13 - Using a Pact Broker
+
+We've been publishing our pacts from the consumer project by coping the files over to the provider project, but we can
+use a Pact Broker to do this instead.
+
+First, in the consumer project we need to tell the Gradle Pact plugin about our broker.
+
