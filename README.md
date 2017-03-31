@@ -911,5 +911,45 @@ The main provider run method becomes:
   }
 ```
 
+Now running the `PactVerificationTest` will pass.
+
 ### Springboot provider
 
+The Springboot root controller gets updated in a similar way to the Dropwizard resource.
+
+```groovy
+  @RequestMapping("/provider.json")
+  Map providerJson(@RequestParam(required = false) String validDate) {
+    if (validDate) {
+      try {
+        def valid_time = LocalDateTime.parse(validDate)
+        [
+          test: 'NO',
+          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
+          count: 1000
+        ]
+      } catch (e) {
+        throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+      }
+    } else {
+      throw new QueryParameterRequiredException('validDate is required')
+    }
+  }
+```
+
+Then, to get the exceptions mapped to the correct response, we need to create a controller advice.
+
+```groovy
+@ControllerAdvice(basePackageClasses = RootController)
+class RootControllerAdvice extends ResponseEntityExceptionHandler {
+
+  @ExceptionHandler([InvalidQueryParameterException, QueryParameterRequiredException])
+  @ResponseBody
+  ResponseEntity handleControllerException(HttpServletRequest request, Throwable ex) {
+    new ResponseEntity(JsonOutput.toJson(ex.message), HttpStatus.BAD_REQUEST)
+  }
+
+}
+```
+
+Now running the `pactVerify` is all successful.
