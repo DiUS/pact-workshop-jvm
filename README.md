@@ -777,7 +777,7 @@ Verifying a pact between Our Little Consumer and Our Provider
   Failures:
   
   0) a request with a missing date parameter returns a response which has a matching body
-        $.body -> Expected 'valid_date is required' but received Map(code -> 500, message -> There was an error processing your request. It has been logged (ID 57cd4a2eae1d5293).)
+        $.body -> Expected 'validDate is required' but received Map(code -> 500, message -> There was an error processing your request. It has been logged (ID 57cd4a2eae1d5293).)
   
   
   1) a request with a missing date parameter returns a response which has status code 400
@@ -829,7 +829,7 @@ Failures:
                             false
 
 1) Verifying a pact between Our Little Consumer and Our Provider - a request with a missing date parameter Given data count > 0 returns a response which has a matching body
-      $.body -> Expected 'valid_date is required' but received Map(path -> /provider.json, timestamp -> 1490922210835, exception -> java.lang.NullPointerException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.lang.NullPointerException: text)
+      $.body -> Expected 'validDate is required' but received Map(path -> /provider.json, timestamp -> 1490922210835, exception -> java.lang.NullPointerException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.lang.NullPointerException: text)
 
 
 2) Verifying a pact between Our Little Consumer and Our Provider - a request with an invalid date parameter Given data count > 0 returns a response which has status code 400
