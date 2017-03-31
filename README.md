@@ -1071,7 +1071,7 @@ Now we can change the data store value in our test based on the provider state.
   }
 ```
 
-Running the test passes.
+Running the test now passes.
 
 ### Springboot provider
 
