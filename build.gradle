@@ -10,16 +10,16 @@ subprojects {
 
   dependencies {
     compile 'org.slf4j:slf4j-api:1.7.22'
-    compile 'org.codehaus.groovy:groovy-all:2.4.8:indy'
+    compile 'org.codehaus.groovy:groovy-all:2.4.11:indy'
     compile 'ch.qos.logback:logback-core:1.1.7',
       'ch.qos.logback:logback-classic:1.1.7'
 
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
       exclude group: 'org.codehaus.groovy'
     }
     testCompile 'cglib:cglib-nodep:3.2.4',
       'org.objenesis:objenesis:2.4'
-    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.11:3.3.8'
+    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.11:3.4.0'
   }
 
   test {
@@ -30,3 +30,16 @@ subprojects {
     groovyOptions.optimizationOptions.indy = true
   }
 }
+
+task copyPactToDropwizard(type: Copy) {
+  from "${project(':consumer').buildDir}/pacts"
+  into "${project(':providers:dropwizard-provider').buildDir}/pacts"
+}
+
+task copyPactToSpringboot(type: Copy) {
+  from "${project(':consumer').buildDir}/pacts"
+  into "${project(':providers:springboot-provider').buildDir}/pacts"
+}
+
+task publishWorkshopPact(dependsOn: [copyPactToDropwizard, copyPactToSpringboot],
+  description: 'Publish the pact file to the provider projects')
