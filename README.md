@@ -342,7 +342,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.3.6"
+  id "au.com.dius.pact" version "3.4.0"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -422,20 +422,18 @@ Verifying a pact between Our Little Consumer and Our Provider
 Failures:
 
 0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body.count -> Expected 100 but received 1000
-
       $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
-        {
-        -    "count": 100,
+            "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
-        -    "test": "NO"
-        +    "count": 1000,
-        +    "test": "NO",
-        +    "validDate": "2017-01-27T16:04:37.686"
+        -    "count": 100
+        +    "validDate": "2017-05-22T10:39:28.137",
+        +    "count": 1000
         }
+
+      $.body.count -> Expected 100 but received 1000
 
 
 :providers:springboot-provider:pactVerify_Our Provider FAILED
