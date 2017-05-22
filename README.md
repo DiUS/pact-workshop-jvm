@@ -330,8 +330,8 @@ There are two ways of validating a pact file against a provider. The first is us
 execute the pact against the running service. The second is to write a pact verification test. We will be doing both
 in this step.
 
-First, we need to 'publish' the pact file from the consumer project. For this workshop, we will just copy it over to the
-provider project.
+First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
+main project to do this.
 
 ### Verifying the springboot provider
 
