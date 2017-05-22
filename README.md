@@ -678,41 +678,41 @@ Here are the two additional tests:
 
 ```groovy
   def 'handles a missing date parameter'() {
-      given:
-      provider {
-        given('data count > 0')
-        uponReceiving('a request with a missing date parameter')
-        withAttributes(path: '/provider.json')
-        willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
-      }
-  
-      when:
-      VerificationResult pactResult = provider.run {
-        client.fetchAndProcessData(null)
-      }
-  
-      then:
-      pactResult == PactVerified$.MODULE$
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with a missing date parameter')
+      withAttributes(path: '/provider.json')
+      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
     }
-  
-    def 'handles an invalid date parameter'() {
-      given:
-      provider {
-        given('data count > 0')
-        uponReceiving('a request with an invalid date parameter')
-        withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
-        willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
-      }
-  
-      when:
-      def result
-      VerificationResult pactResult = provider.run {
-        result = client.fetchAndProcessData('This is not a date')
-      }
-  
-      then:
-      pactResult == PactVerified$.MODULE$
+
+    when:
+    PactVerificationResult pactResult = provider.runTest {
+      client.fetchAndProcessData(null)
     }
+
+    then:
+    pactResult == PactVerificationResult.Ok.INSTANCE
+  }
+
+  def 'handles an invalid date parameter'() {
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with an invalid date parameter')
+      withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
+      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
+    }
+
+    when:
+    def result
+    PactVerificationResult pactResult = provider.runTest {
+      result = client.fetchAndProcessData('This is not a date')
+    }
+
+    then:
+    pactResult == PactVerificationResult.Ok.INSTANCE
+  }
 ```
 
 After running our specs, the pact file will have 2 new interactions.
