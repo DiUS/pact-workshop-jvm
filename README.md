@@ -970,12 +970,12 @@ consumer test for this.
 
     when:
     def result
-    VerificationResult pactResult = provider.run {
+    PactVerificationResult pactResult = provider.runTest {
       result = client.fetchAndProcessData(date.toString())
     }
 
     then:
-    pactResult == PactVerified$.MODULE$
+    pactResult == PactVerificationResult.Ok.INSTANCE
   }
 ```
 
@@ -988,7 +988,7 @@ This adds a new interaction to the pact file:
       "request": {
           "method": "GET",
           "path": "/provider.json",
-          "query": "validDate=2017-03-31T13%3A45%3A38.842"
+          "query": "validDate=2017-05-22T13%3A34%3A41.515"
       },
       "response": {
           "status": 404

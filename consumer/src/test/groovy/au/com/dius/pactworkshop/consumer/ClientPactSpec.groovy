@@ -103,12 +103,12 @@ class ClientPactSpec extends Specification {
 
     when:
     def result
-    VerificationResult pactResult = provider.run {
+    PactVerificationResult pactResult = provider.runTest {
       result = client.fetchAndProcessData(date.toString())
     }
 
     then:
-    pactResult == PactVerified$.MODULE$
+    pactResult == PactVerificationResult.Ok.INSTANCE
   }
 
 }
