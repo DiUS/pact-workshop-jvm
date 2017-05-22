@@ -1,5 +1,5 @@
 plugins {
-  id "au.com.dius.pact" version "3.3.7"
+  id "au.com.dius.pact" version "3.4.0"
 }
 
 apply plugin: 'application'
@@ -13,6 +13,8 @@ dependencies {
 
 pact {
   publish {
-    pactBrokerUrl = "https://$pactBrokerUser:$pactBrokerPassword@test.pact.dius.com.au"
+    pactBrokerUrl = 'https://test.pact.dius.com.au'
+    pactBrokerUsername = project.pactBrokerUser
+    pactBrokerPassword = project.pactBrokerPassword
   }
 }

@@ -1196,7 +1196,7 @@ First, in the consumer project we need to tell the Gradle Pact plugin about our 
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.3.7"
+  id "au.com.dius.pact" version "3.4.0"
 }
 
 apply plugin: 'application'
@@ -1210,9 +1210,12 @@ dependencies {
 
 pact {
   publish {
-    pactBrokerUrl = "https://$pactBrokerUser:$pactBrokerPassword@test.pact.dius.com.au"
+    pactBrokerUrl = 'https://test.pact.dius.com.au'
+    pactBrokerUsername = project.pactBrokerUser
+    pactBrokerPassword = project.pactBrokerPassword
   }
 }
+
 ```
 
 Now, we can run `./gradlew consumer:pactPublish` after running the consumer tests to have the generated pact file 
