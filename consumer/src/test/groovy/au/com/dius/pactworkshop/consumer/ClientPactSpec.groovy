@@ -1,7 +1,6 @@
 package au.com.dius.pactworkshop.consumer
 
-import au.com.dius.pact.consumer.PactVerified$
-import au.com.dius.pact.consumer.VerificationResult
+import au.com.dius.pact.consumer.PactVerificationResult
 import au.com.dius.pact.consumer.groovy.PactBuilder
 import spock.lang.Specification
 
@@ -51,12 +50,12 @@ class ClientPactSpec extends Specification {
 
     when:
     def result
-    VerificationResult pactResult = provider.run {
+    PactVerificationResult pactResult = provider.runTest {
       result = client.fetchAndProcessData(date)
     }
 
     then:
-    pactResult == PactVerified$.MODULE$
+    pactResult == PactVerificationResult.Ok.INSTANCE
     result == [1, OffsetDateTime.parse(json.date, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx"))]
   }
 
