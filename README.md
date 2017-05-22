@@ -247,12 +247,12 @@ class ClientPactSpec extends Specification {
 
     when:
     def result
-    VerificationResult pactResult = provider.run {
+    PactVerificationResult pactResult = provider.runTest {
       result = client.fetchAndProcessData(date)
     }
 
     then:
-    pactResult == PactVerified$.MODULE$
+    pactResult == PactVerificationResult.Ok.INSTANCE
     result == [1, ZonedDateTime.parse(json.date)]
   }
 
@@ -297,7 +297,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "request": {
                 "method": "GET",
                 "path": "/provider.json",
-                "query": "validDate=2017-01-27T15%3A01%3A38.027"
+                "query": "validDate=2017-05-22T10%3A16%3A29.732"
             },
             "response": {
                 "status": 200,
@@ -318,7 +318,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "version": "2.0.0"
         },
         "pact-jvm": {
-            "version": "3.3.6"
+            "version": "3.4.0"
         }
     }
 }
@@ -330,8 +330,8 @@ There are two ways of validating a pact file against a provider. The first is us
 execute the pact against the running service. The second is to write a pact verification test. We will be doing both
 in this step.
 
-First, we need to 'publish' the pact file from the consumer project. For this workshop, we will just copy it over to the
-provider project.
+First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
+main project to do this.
 
 ### Verifying the springboot provider
 
@@ -342,7 +342,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.3.6"
+  id "au.com.dius.pact" version "3.4.0"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -422,20 +422,18 @@ Verifying a pact between Our Little Consumer and Our Provider
 Failures:
 
 0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body.count -> Expected 100 but received 1000
-
       $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
-        {
-        -    "count": 100,
+            "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
-        -    "test": "NO"
-        +    "count": 1000,
-        +    "test": "NO",
-        +    "validDate": "2017-01-27T16:04:37.686"
+        -    "count": 100
+        +    "validDate": "2017-05-22T10:39:28.137",
+        +    "count": 1000
         }
+
+      $.body.count -> Expected 100 but received 1000
 
 
 :providers:springboot-provider:pactVerify_Our Provider FAILED
@@ -680,41 +678,41 @@ Here are the two additional tests:
 
 ```groovy
   def 'handles a missing date parameter'() {
-      given:
-      provider {
-        given('data count > 0')
-        uponReceiving('a request with a missing date parameter')
-        withAttributes(path: '/provider.json')
-        willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
-      }
-  
-      when:
-      VerificationResult pactResult = provider.run {
-        client.fetchAndProcessData(null)
-      }
-  
-      then:
-      pactResult == PactVerified$.MODULE$
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with a missing date parameter')
+      withAttributes(path: '/provider.json')
+      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
     }
-  
-    def 'handles an invalid date parameter'() {
-      given:
-      provider {
-        given('data count > 0')
-        uponReceiving('a request with an invalid date parameter')
-        withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
-        willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
-      }
-  
-      when:
-      def result
-      VerificationResult pactResult = provider.run {
-        result = client.fetchAndProcessData('This is not a date')
-      }
-  
-      then:
-      pactResult == PactVerified$.MODULE$
+
+    when:
+    PactVerificationResult pactResult = provider.runTest {
+      client.fetchAndProcessData(null)
     }
+
+    then:
+    pactResult == PactVerificationResult.Ok.INSTANCE
+  }
+
+  def 'handles an invalid date parameter'() {
+    given:
+    provider {
+      given('data count > 0')
+      uponReceiving('a request with an invalid date parameter')
+      withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
+      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
+    }
+
+    when:
+    def result
+    PactVerificationResult pactResult = provider.runTest {
+      result = client.fetchAndProcessData('This is not a date')
+    }
+
+    then:
+    pactResult == PactVerificationResult.Ok.INSTANCE
+  }
 ```
 
 After running our specs, the pact file will have 2 new interactions.
