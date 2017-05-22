@@ -247,12 +247,12 @@ class ClientPactSpec extends Specification {
 
     when:
     def result
-    VerificationResult pactResult = provider.run {
+    PactVerificationResult pactResult = provider.runTest {
       result = client.fetchAndProcessData(date)
     }
 
     then:
-    pactResult == PactVerified$.MODULE$
+    pactResult == PactVerificationResult.Ok.INSTANCE
     result == [1, ZonedDateTime.parse(json.date)]
   }
 
@@ -297,7 +297,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "request": {
                 "method": "GET",
                 "path": "/provider.json",
-                "query": "validDate=2017-01-27T15%3A01%3A38.027"
+                "query": "validDate=2017-05-22T10%3A16%3A29.732"
             },
             "response": {
                 "status": 200,
@@ -318,7 +318,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "version": "2.0.0"
         },
         "pact-jvm": {
-            "version": "3.3.6"
+            "version": "3.4.0"
         }
     }
 }
