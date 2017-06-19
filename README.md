@@ -346,9 +346,13 @@ in this step.
 First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
 main project to do this.
 
+
+![Pact Verification](diagrams/step4_pact.png)
+
+
 ### Verifying the springboot provider
 
-For the springboot provider, we are going to use Gradle to verify the pact file for us. We need to add the pact gradle 
+For the springboot provider, we are going to use Gradle to verify the pact file for us. We need to add the pact gradle
 plugin and the spawn plugin to the project and configure them.
 
 *providers/springboot-provider/build.gradle:*
@@ -463,6 +467,6 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 BUILD FAILED
 ```
 
-The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. 
+The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer.
 Secondly, and more importantly, the consumer was expecting a `date` field while the provider generates a `validDate`
 field. Also, the date formats are different.
