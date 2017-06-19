@@ -106,6 +106,8 @@ Now lets get the client to use the data it gets back from the provider. Here is 
   }
 ```
 
+![Sequence 2](diagrams/step2_sequence_diagram.png)
+
 Let's now test our updated client.
 
 *consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientSpec.groovy:*
@@ -205,5 +207,5 @@ Exception in thread "main" java.lang.NullPointerException: text
 FAILURE: Build failed with an exception.
 ```
 
-The provider returns a `validDate` while the consumer is 
+The provider returns a `validDate` while the consumer is
 trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
