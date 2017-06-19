@@ -142,6 +142,8 @@ class ClientSpec extends Specification {
 }
 ```
 
+![Unit Test With Mocked Response](diagrams/step2_unit_test.png)
+
 Let's run this spec and see it all pass:
 
 ```
