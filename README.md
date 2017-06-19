@@ -248,10 +248,6 @@ class ClientPactSpec extends Specification {
       count: 100
     ]
     provider {
-      serviceConsumer 'Our Little Consumer'
-      hasPactWith 'Our Provider'
-      port 1234
-
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
