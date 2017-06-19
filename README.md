@@ -677,4 +677,8 @@ class RootResource {
 }
 ```
 
+
+
+
+
 Running the verification against the providers now pass. Yay!
