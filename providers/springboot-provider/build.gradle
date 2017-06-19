@@ -42,7 +42,9 @@ pact {
       terminateProviderTask = stopProvider
       stateChangeUrl = url('http://localhost:8080/pactStateChange')
 
-      hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
+      if (project.hasProperty('pactBrokerUser') && pactBrokerUser != '<YOUR USER>') {
+        hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
+      }
     }
   }
 }
