@@ -1,11 +1,14 @@
 # Example JVM project for the Pact workshop
 
-This project has 3 components, a consumer project and two service providers, one Dropwizard and one 
+This project has 3 components, a consumer project and two service providers, one Dropwizard and one
 Springboot service that the consumer will interaction with.
- 
+
 ## Step 1 - Simple Consumer calling Provider
 
-Given we have a client that needs to make a HTTP GET request to a provider service, and requires a response in JSON format. 
+Given we have a client that needs to make a HTTP GET request to a provider service, and requires a response in JSON format.
+
+![Simple Consumer](diagrams/workshop_step1.png)
+
 The client is quite simple and looks like this
 
 *consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
@@ -67,6 +70,8 @@ class RootController {
 ```
 
 This providers expects a `validDate` parameter in HTTP date format, and then return some simple json back.
+
+![Sequence Diagram](diagrams/sequence_diagram.png)
 
 Running the client with either provider works nicely.
 
