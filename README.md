@@ -71,6 +71,8 @@ class RootController {
 
 This providers expects a `validDate` parameter in HTTP date format, and then return some simple json back.
 
+![Sequence Diagram](diagrams/Step1 Sequence Diagram.png)
+
 Running the client with either provider works nicely.
 
 ```
