@@ -1,11 +1,16 @@
 # Example JVM project for the Pact workshop
 
-This project has 3 components, a consumer project and two service providers, one Dropwizard and one 
+This project has 3 components, a consumer project and two service providers, one Dropwizard and one
 Springboot service that the consumer will interaction with.
- 
+
 ## Step 1 - Simple Consumer calling Provider
 
-Given we have a client that needs to make a HTTP GET request to a provider service, and requires a response in JSON format. 
+Given we have a client that needs to make a HTTP GET request to a provider service, and requires a response in JSON format.
+
+
+![Simple Consumer](diagrams/workshop_step1.png)
+
+
 The client is quite simple and looks like this
 
 *consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
@@ -68,6 +73,10 @@ class RootController {
 
 This providers expects a `validDate` parameter in HTTP date format, and then return some simple json back.
 
+
+![Sequence Diagram](diagrams/sequence_diagram.png)
+
+
 Running the client with either provider works nicely.
 
 ```console
@@ -100,6 +109,8 @@ Now lets get the client to use the data it gets back from the provider. Here is 
     [value, date]
   }
 ```
+
+![Sequence 2](diagrams/step2_sequence_diagram.png)
 
 Let's now test our updated client.
 
@@ -134,6 +145,8 @@ class ClientSpec extends Specification {
 
 }
 ```
+
+![Unit Test With Mocked Response](diagrams/step2_unit_test.png)
 
 Let's run this spec and see it all pass:
 
@@ -200,7 +213,7 @@ Exception in thread "main" java.lang.NullPointerException: text
 FAILURE: Build failed with an exception.
 ```
 
-The provider returns a `validDate` while the consumer is 
+The provider returns a `validDate` while the consumer is
 trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
 
 ## Step 3 - Pact to the rescue
@@ -235,10 +248,6 @@ class ClientPactSpec extends Specification {
       count: 100
     ]
     provider {
-      serviceConsumer 'Our Little Consumer'
-      hasPactWith 'Our Provider'
-      port 1234
-
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
@@ -258,6 +267,10 @@ class ClientPactSpec extends Specification {
 
 }
 ```
+
+
+![Test using Pact](diagrams/step3_pact.png)
+
 
 This test starts a mock server on port 1234 that pretends to be our provider. To get this to work we needed to update
 our consumer to pass in the URL of the provider. We also updated the `fetchAndProcessData` method to pass in the
