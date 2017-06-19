@@ -6,11 +6,6 @@ Springboot service that the consumer will interaction with.
 ## Step 1 - Simple Consumer calling Provider
 
 Given we have a client that needs to make a HTTP GET request to a provider service, and requires a response in JSON format.
-
-
-![Simple Consumer](diagrams/workshop_step1.png)
-
-
 The client is quite simple and looks like this
 
 *consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
@@ -73,10 +68,6 @@ class RootController {
 
 This providers expects a `validDate` parameter in HTTP date format, and then return some simple json back.
 
-
-![Sequence Diagram](diagrams/sequence_diagram.png)
-
-
 Running the client with either provider works nicely.
 
 ```console
@@ -109,8 +100,6 @@ Now lets get the client to use the data it gets back from the provider. Here is 
     [value, date]
   }
 ```
-
-![Sequence 2](diagrams/step2_sequence_diagram.png)
 
 Let's now test our updated client.
 
@@ -145,8 +134,6 @@ class ClientSpec extends Specification {
 
 }
 ```
-
-![Unit Test With Mocked Response](diagrams/step2_unit_test.png)
 
 Let's run this spec and see it all pass:
 
@@ -248,6 +235,10 @@ class ClientPactSpec extends Specification {
       count: 100
     ]
     provider {
+      serviceConsumer 'Our Little Consumer'
+      hasPactWith 'Our Provider'
+      port 1234
+
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
@@ -267,10 +258,6 @@ class ClientPactSpec extends Specification {
 
 }
 ```
-
-
-![Test using Pact](diagrams/step3_pact.png)
-
 
 This test starts a mock server on port 1234 that pretends to be our provider. To get this to work we needed to update
 our consumer to pass in the URL of the provider. We also updated the `fetchAndProcessData` method to pass in the
@@ -345,10 +332,6 @@ in this step.
 
 First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
 main project to do this.
-
-
-![Pact Verification](diagrams/step4_pact.png)
-
 
 ### Verifying the springboot provider
 
@@ -563,14 +546,18 @@ Failures:
 
 ## Step 6 - Back to the client we go
 
-Let's correct the consumer test to handle any integer for `count` and use the correct field for the `date`. Then we need 
-to add a type matcher for `count` and change the field for the date to be `validDate`. We can also add a date expression 
+Let's correct the consumer test to handle any integer for `count` and use the correct field for the `date`. Then we need
+to add a type matcher for `count` and change the field for the date to be `validDate`. We can also add a date expression
 to make sure the `validDate` field is a valid date. This is important because we are parsing it.
 
 The updated consumer test is now:
 
 ```groovy
     provider {
+      serviceConsumer 'Our Little Consumer'
+      hasPactWith 'Our Provider'
+      port 1234
+
       given('data count > 0')
       uponReceiving('a request for json data')
       withAttributes(path: '/provider.json', query: [validDate: date.toString()])
@@ -678,7 +665,7 @@ class RootResource {
 ```
 
 
-
+![Verification Passes](diagrams/step7_pact.png)
 
 
 Running the verification against the providers now pass. Yay!
