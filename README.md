@@ -77,9 +77,16 @@ This providers expects a `validDate` parameter in HTTP date format, and then ret
 ![Sequence Diagram](diagrams/sequence_diagram.png)
 
 
-Running the client with either provider works nicely.
+Running the client with either provider works nicely. For example, start the dropwizard-provider in one terminal:
 
 ```console
+./gradlew :providers:dropwizard-provider:run
+```
+
+Once the provider has successfully initialized, open another terminal session and run the consumer:
+
+```console
+
 $ ./gradlew :consumer:run
 Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status for details
 :consumer:compileJava UP-TO-DATE
@@ -91,6 +98,8 @@ Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status fo
 
 BUILD SUCCESSFUL
 ```
+
+Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
 
 ## Step 2 - Client Tested but integration fails
 
