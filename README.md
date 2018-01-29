@@ -80,7 +80,7 @@ This providers expects a `validDate` parameter in HTTP date format, and then ret
 Running the client with either provider works nicely. For example, start the dropwizard-provider in one terminal:
 
 ```console
-./gradlew :providers:dropwizard-provider:run
+$ ./gradlew :providers:dropwizard-provider:run
 ```
 
 Once the provider has successfully initialized, open another terminal session and run the consumer:
