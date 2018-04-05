@@ -289,18 +289,10 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
 ```console
 $ ./gradlew :consumer:check
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:compileTestJava UP-TO-DATE
-:consumer:compileTestGroovy UP-TO-DATE
-:consumer:processTestResources UP-TO-DATE
-:consumer:testClasses UP-TO-DATE
-:consumer:test
-:consumer:check
+Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
 
-BUILD SUCCESSFUL
+BUILD SUCCESSFUL in 17s
+3 actionable tasks: 3 executed
 ```
 
 Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json*):
@@ -319,7 +311,11 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "request": {
                 "method": "GET",
                 "path": "/provider.json",
-                "query": "validDate=2017-05-22T10%3A16%3A29.732"
+                "query": {
+                    "validDate": [
+                        "2018-04-05T16:52:33.801"
+                    ]
+                }
             },
             "response": {
                 "status": 200,
@@ -332,15 +328,19 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
                     "count": 100
                 }
             },
-            "providerState": "data count > 0"
+            "providerStates": [
+                {
+                    "name": "data count > 0"
+                }
+            ]
         }
     ],
     "metadata": {
         "pact-specification": {
-            "version": "2.0.0"
+            "version": "3.0.0"
         },
         "pact-jvm": {
-            "version": "3.4.0"
+            "version": "3.5.14"
         }
     }
 }
