@@ -25,3 +25,4 @@ subprojects {
   test {
     systemProperties['pact.rootDir'] = "$buildDir/pacts"
   }
+}
