@@ -3,7 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.4.RELEASE")
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.0.RELEASE")
   }
 }
 
@@ -15,6 +15,7 @@ plugins {
 import com.wiredforcode.gradle.spawn.*
 
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
 dependencies {
   compile("org.springframework.boot:spring-boot-starter-web") {
