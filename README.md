@@ -88,15 +88,14 @@ Once the provider has successfully initialized, open another terminal session an
 ```console
 
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status for details
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:run
-[test:NO, validDate:2017-01-27T11:49:04.131, count:1000]
+Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
 
-BUILD SUCCESSFUL
+> Task :consumer:run
+[test:NO, validDate:2018-04-05T16:27:43.243, count:1000]
+
+
+BUILD SUCCESSFUL in 7s
+2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
