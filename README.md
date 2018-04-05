@@ -368,7 +368,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.4.0"
+  id "au.com.dius.pact" version "3.5.14"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -403,16 +403,8 @@ Now if we copy the pact file from the consumer project and run our pact verifica
 
 ```console
 $ ./gradlew :providers:springboot-provider:pactVerify
-Starting a Gradle Daemon (subsequent builds will be faster)
-:providers:springboot-provider:compileJava UP-TO-DATE
-:providers:springboot-provider:compileGroovy UP-TO-DATE
-:providers:springboot-provider:processResources UP-TO-DATE
-:providers:springboot-provider:classes UP-TO-DATE
-:providers:springboot-provider:findMainClass
-:providers:springboot-provider:jar
-:providers:springboot-provider:bootRepackage
-:providers:springboot-provider:assemble
-:providers:springboot-provider:startProvider
+
+> Task :providers:springboot-provider:startProvider
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -420,22 +412,19 @@ Starting a Gradle Daemon (subsequent builds will be faster)
  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::        (v1.4.4.RELEASE)
+ :: Spring Boot ::        (v2.0.0.RELEASE)
 ```
 
 ... omitting lots of logs ...
 
 ```console
-2017-01-27 16:04:36.817  INFO 17300 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 3.422 seconds (JVM running for 3.952)
+2018-04-05 17:20:53.361  INFO 14418 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 4.698 seconds (JVM running for 5.493)
 java -jar /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/libs/springboot-provider.jar is ready.
-:providers:springboot-provider:compileTestJava UP-TO-DATE
-:providers:springboot-provider:compileTestGroovy UP-TO-DATE
-:providers:springboot-provider:processTestResources UP-TO-DATE
-:providers:springboot-provider:testClasses UP-TO-DATE
-:providers:springboot-provider:pactVerify_Our Provider
+
+> Task :providers:springboot-provider:pactVerify_Our Provider
 
 Verifying a pact between Our Little Consumer and Our Provider
-  [Using file /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
+  [Using File /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
   a request for json data
@@ -447,23 +436,22 @@ Verifying a pact between Our Little Consumer and Our Provider
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+0) Verifying a pact between Our Little Consumer and Our Provider - a request for json dataVerifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
             "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
         -    "count": 100
-        +    "validDate": "2017-05-22T10:39:28.137",
+        +    "validDate": "2018-04-05T17:20:55.021",
         +    "count": 1000
         }
 
-      $.body.count -> Expected 100 but received 1000
+      $.count -> Expected 100 but received 1000
 
 
-:providers:springboot-provider:pactVerify_Our Provider FAILED
-:providers:springboot-provider:stopProvider
+
 
 FAILURE: Build failed with an exception.
 
@@ -471,9 +459,15 @@ FAILURE: Build failed with an exception.
 There were 1 pact failures for provider Our Provider
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 5.0.
+See https://docs.gradle.org/4.6/userguide/command_line_interface.html#sec:command_line_warnings
+
+BUILD FAILED in 11s
+5 actionable tasks: 5 executed
 ```
 
 The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer.
