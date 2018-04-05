@@ -19,7 +19,7 @@ subprojects {
     }
     testCompile 'cglib:cglib-nodep:3.2.4',
       'org.objenesis:objenesis:2.4'
-    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.11:3.4.0'
+    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.12:3.5.14'
   }
 
   test {
