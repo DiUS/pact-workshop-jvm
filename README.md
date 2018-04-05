@@ -1,5 +1,8 @@
 # Example JVM project for the Pact workshop
 
+This workshop is setup with a number of steps that can be run through. Each step is in a branch, so to run through a
+step of the workshop just check out the branch for that step (i.e. `git checkout step1`).
+
 This project has 3 components, a consumer project and two service providers, one Dropwizard and one
 Springboot service that the consumer will interaction with.
 
