@@ -160,31 +160,20 @@ Let's run this spec and see it all pass:
 
 ```console
 $ ./gradlew :consumer:check
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy
-:consumer:processResources UP-TO-DATE
-:consumer:classes
-:consumer:compileTestJava UP-TO-DATE
-:consumer:compileTestGroovy
-:consumer:processTestResources UP-TO-DATE
-:consumer:testClasses
-:consumer:test
-:consumer:check
 
-BUILD SUCCESSFUL
+BUILD SUCCESSFUL in 3s
+3 actionable tasks: 3 executed
 ```
 
 However, there is a problem with this integration point. Running the actual client against any of the providers results in
  a runtime exception!
 
-```
+```console
 $ ./gradlew :consumer:run
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:run
-data=[test:NO, validDate:2017-01-27T14:21:23.174, count:1000]
+Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
+
+> Task :consumer:run FAILED
+data=[test:NO, validDate:2018-04-05T16:40:40.295, count:1000]
 Exception in thread "main" java.lang.NullPointerException: text
         at java.util.Objects.requireNonNull(Objects.java:228)
         at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1848)
@@ -206,8 +195,8 @@ Exception in thread "main" java.lang.NullPointerException: text
         at java.lang.reflect.Method.invoke(Method.java:498)
         at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
         at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1218)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1027)
+        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1213)
+        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1022)
         at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
         at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
         at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
@@ -216,9 +205,21 @@ Exception in thread "main" java.lang.NullPointerException: text
         at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
         at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:133)
         at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
-:consumer:run FAILED
+
 
 FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':consumer:run'.
+> Process 'command '/usr/lib/jvm/java-8-oracle/bin/java'' finished with non-zero exit value 1
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 7s
+2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
 The provider returns a `validDate` while the consumer is
