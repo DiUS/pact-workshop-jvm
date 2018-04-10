@@ -627,19 +627,18 @@ Failures:
 
 Lets fix the providers and then re-run the verification tests. Here is the corrected Dropwizard resource:
 
-```groovy
-@Path("/provider.json")
-@Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+```java
+@RestController
+public class RootController {
 
-  @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-      count: 1000
-    ]
+  @RequestMapping("/provider.json")
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+    map.put("count", 1000);
+    return map;
   }
 
 }
