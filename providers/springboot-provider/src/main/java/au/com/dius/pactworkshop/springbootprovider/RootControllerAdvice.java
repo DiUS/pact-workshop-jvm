@@ -20,4 +20,10 @@ public class RootControllerAdvice extends ResponseEntityExceptionHandler {
     headers.setContentType(MediaType.APPLICATION_JSON);
     return new ResponseEntity<>("{\"error\": \"" + ex.getMessage() + "\"}", headers, HttpStatus.BAD_REQUEST);
   }
+
+  @ExceptionHandler(NoDataException.class)
+  @ResponseBody
+  ResponseEntity handleNoDataException(HttpServletRequest request, Throwable ex) {
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
+  }
 }

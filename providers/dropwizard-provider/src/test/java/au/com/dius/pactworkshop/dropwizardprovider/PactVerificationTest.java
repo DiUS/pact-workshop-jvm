@@ -25,6 +25,11 @@ public class PactVerificationTest {
 
   @State("data count > 0")
   public void dataCountGreaterThanZero() {
+    DataStore.INSTANCE.setDataCount(1000);
+  }
 
+  @State("data count == 0")
+  public void dataCountZero() {
+    DataStore.INSTANCE.setDataCount(0);
   }
 }

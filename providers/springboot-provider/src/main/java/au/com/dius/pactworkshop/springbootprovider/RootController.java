@@ -19,19 +19,22 @@ public class RootController {
   @RequestMapping("/provider.json")
   public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
     if (StringUtils.isNotEmpty(validDate)) {
-      try {
-        LocalDateTime validTime = LocalDateTime.parse(validDate);
-        Map<String, Serializable> map = new HashMap<>(3);
-        map.put("test", "NO");
-        map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
-        map.put("count", 1000);
-        return map;
-      } catch (DateTimeParseException e) {
-        throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);
+      if (DataStore.INSTANCE.getDataCount() > 0) {
+        try {
+          LocalDateTime validTime = LocalDateTime.parse(validDate);
+          Map<String, Serializable> map = new HashMap<>(3);
+          map.put("test", "NO");
+          map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          map.put("count", 1000);
+          return map;
+        } catch (DateTimeParseException e) {
+          throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);
+        }
+      } else {
+        throw new NoDataException();
       }
     } else {
       throw new QueryParameterRequiredException("validDate is required");
     }
   }
-
 }

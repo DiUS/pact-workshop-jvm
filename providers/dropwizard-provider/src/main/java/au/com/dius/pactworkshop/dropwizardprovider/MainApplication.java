@@ -8,6 +8,7 @@ public class MainApplication extends Application<ServiceConfig> {
   public void run(ServiceConfig configuration, Environment environment) {
     environment.jersey().register(new InvalidQueryParameterExceptionMapper());
     environment.jersey().register(new QueryParameterRequiredExceptionMapper());
+    environment.jersey().register(new NoDataExceptionMapper());
     environment.jersey().register(new RootResource());
   }
 

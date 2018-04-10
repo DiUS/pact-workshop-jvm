@@ -1,4 +1,4 @@
-package au.com.dius.pactworkshop.dropwizardprovider;
+package au.com.dius.pactworkshop.springbootprovider;
 
 public class DataStore {
   public static final DataStore INSTANCE = new DataStore();
