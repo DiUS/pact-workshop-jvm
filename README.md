@@ -30,21 +30,21 @@ class Client {
 
 and the dropwizard provider resource
 
-*providers/dropwizard-provider/src/main/groovy/au/com/dius/pactworkshop/dropwizardprovider/RootResource.groovy:*
+*providers/dropwizard-provider/src/main/java/au/com/dius/pactworkshop/dropwizardprovider/RootResource.java:*
 
-```groovy
+```java
 @Path("/provider.json")
 @Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+public class RootResource {
 
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Object> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    LocalDateTime valid_time = LocalDateTime.parse(validDate.get());
+    Map<String, Object> result = new HashMap<>();
+    result.put("test", "NO");
+    result.put("validDate", LocalDateTime.now().toString());
+    result.put("count", 1000);
+    return result;
   }
 
 }
