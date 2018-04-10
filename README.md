@@ -1110,7 +1110,7 @@ First, lets enable the state change URL handling in the build gradle file.
 ```groovy
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider
