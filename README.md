@@ -13,38 +13,35 @@ Given we have a client that needs to make a HTTP GET request to a provider servi
 
 The client is quite simple and looks like this
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-class Client {
-
-  def loadProviderJson() {
-    def http = new RESTClient('http://localhost:8080')
-    def response = http.get(path: '/provider.json', query: [validDate: LocalDateTime.now().toString()])
-    if (response.success) {
-      response.data
-    }
+```java
+public class Client {
+  public Object loadProviderJson() throws UnirestException {
+    return Unirest.get("http://localhost:8080/provider.json")
+      .queryString("validDate", LocalDateTime.now().toString())
+      .asJson().getBody();
   }
 }
 ```
 
 and the dropwizard provider resource
 
-*providers/dropwizard-provider/src/main/groovy/au/com/dius/pactworkshop/dropwizardprovider/RootResource.groovy:*
+*providers/dropwizard-provider/src/main/java/au/com/dius/pactworkshop/dropwizardprovider/RootResource.java:*
 
-```groovy
+```java
 @Path("/provider.json")
 @Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+public class RootResource {
 
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Object> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    LocalDateTime valid_time = LocalDateTime.parse(validDate.get());
+    Map<String, Object> result = new HashMap<>();
+    result.put("test", "NO");
+    result.put("validDate", LocalDateTime.now().toString());
+    result.put("count", 1000);
+    return result;
   }
 
 }
@@ -52,20 +49,20 @@ class RootResource {
 
 The springboot provider controller is similar
 
-*providers/springboot-provider/src/main/groovy/au/com/dius/pactworkshop/springbootprovider/RootController.groovy:*
+*providers/springboot-provider/src/main/java/au/com/dius/pactworkshop/springbootprovider/RootController.java:*
 
-```groovy
+```java
 @RestController
-class RootController {
+public class RootController {
 
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    def validTime = LocalDateTime.parse(validDate)
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", LocalDateTime.now().toString());
+    map.put("count", 1000);
+    return map;
   }
 
 }
@@ -86,16 +83,15 @@ $ ./gradlew :providers:dropwizard-provider:run
 Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
-
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
 
 > Task :consumer:run
-[test:NO, validDate:2018-04-05T16:27:43.243, count:1000]
+{"test":"NO","validDate":"2018-04-10T10:59:41.122","count":1000}
 
 
-BUILD SUCCESSFUL in 7s
-2 actionable tasks: 1 executed, 1 up-to-date
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
 ```
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
@@ -104,51 +100,52 @@ Don't forget to stop the dropwizard-provider that is running in the first termin
 
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-  def fetchAndProcessData() {
-    def data = loadProviderJson()
-    println "data=$data"
-    def value = 100 / data.count
-    def date = LocalDateTime.parse(data.date)
-    println "value=$value"
-    println "date=$date"
-    [value, date]
+```java
+  public List<Object> fetchAndProcessData() throws UnirestException {
+      JsonNode data = loadProviderJson();
+      System.out.println("data=" + data);
+
+      JSONObject jsonObject = data.getObject();
+      int value = 100 / jsonObject.getInt("count");
+      ZonedDateTime date = ZonedDateTime.parse(jsonObject.getString("date"));
+
+      System.out.println("value=" + value);
+      System.out.println("date=" + date);
+      return Arrays.asList(value, date);
   }
 ```
 
 ![Sequence 2](diagrams/step2_sequence_diagram.png)
 
-Let's now test our updated client.
+Let's now test our updated client. We're using [Wiremock](http://wiremock.org/) here to mock out the provider.
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientSpec.groovy:*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientTest.java:*
 
-```groovy
-class ClientSpec extends Specification {
+```java
+public class ClientTest {
 
-  private Client client
-  private RESTClient mockHttp
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(8080);
 
-  def setup() {
-    mockHttp = Mock(RESTClient)
-    client = new Client(http: mockHttp)
-  }
+  @Test
+  public void canProcessTheJsonPayloadFromTheProvider() throws UnirestException {
 
-  def 'can process the json payload from the provider'() {
-    given:
-    def json = [
-      test: 'NO',
-      date: '2013-08-16T15:31:20+10:00',
-      count: 100
-    ]
+    String date = "2013-08-16T15:31:20+10:00";
 
-    when:
-    def result = client.fetchAndProcessData()
+    stubFor(get(urlPathEqualTo("/provider.json"))
+      .withQueryParam("validDate", matching(".+"))
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withHeader("Content-Type", "application/json")
+        .withBody("{\"test\": \"NO\", \"date\": \"" + date + "\", \"count\": 100}")));
 
-    then:
-    1 * mockHttp.get(_) >> [data: json, success: true]
-    result == [1, ZonedDateTime.parse(json.date)]
+    List<Object> data = new Client().fetchAndProcessData();
+
+    assertThat(data, hasSize(2));
+    assertThat(data.get(0), is(1));
+    assertThat(data.get(1), is(ZonedDateTime.parse(date)));
   }
 
 }
@@ -161,8 +158,8 @@ Let's run this spec and see it all pass:
 ```console
 $ ./gradlew :consumer:check
 
-BUILD SUCCESSFUL in 3s
-3 actionable tasks: 3 executed
+BUILD SUCCESSFUL in 0s
+3 actionable tasks: 3 up-to-date
 ```
 
 However, there is a problem with this integration point. Running the actual client against any of the providers results in
@@ -170,41 +167,14 @@ However, there is a problem with this integration point. Running the actual clie
 
 ```console
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
 
 > Task :consumer:run FAILED
-data=[test:NO, validDate:2018-04-05T16:40:40.295, count:1000]
-Exception in thread "main" java.lang.NullPointerException: text
-        at java.util.Objects.requireNonNull(Objects.java:228)
-        at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1848)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:597)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:582)
-        at java_time_ZonedDateTime$parse.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)
-        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.groovy:26)
-        at au.com.dius.pactworkshop.consumer.Client$fetchAndProcessData.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:117)
-        at au.com.dius.pactworkshop.consumer.Consumer.run(Consumer.groovy:3)
-        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.lang.reflect.Method.invoke(Method.java:498)
-        at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
-        at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1213)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1022)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
-        at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
-        at org.codehaus.groovy.runtime.InvokerHelper$runScript.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:133)
-        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
+data={"test":"NO","validDate":"2018-04-10T11:48:36.838","count":1000}
+Exception in thread "main" org.json.JSONException: JSONObject["date"] not found.
+        at org.json.JSONObject.get(JSONObject.java:471)
+        at org.json.JSONObject.getString(JSONObject.java:717)
+        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.java:26)
+        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.java:7)
 
 
 FAILURE: Build failed with an exception.
@@ -218,12 +188,12 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 
 * Get more help at https://help.gradle.org
 
-BUILD FAILED in 7s
+BUILD FAILED in 1s
 2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
-The provider returns a `validDate` while the consumer is
-trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
+The provider returns a `validDate` while the consumer is trying to use `date`, which will blow up when run for
+real even with the tests all passing. Here is where Pact comes in.
 
 ## Step 3 - Pact to the rescue
 
@@ -289,10 +259,10 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
 ```console
 $ ./gradlew :consumer:check
-Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
+Starting a Gradle Daemon, 1 incompatible and 3 stopped Daemons could not be reused, use --status for details
 
-BUILD SUCCESSFUL in 17s
-3 actionable tasks: 3 executed
+BUILD SUCCESSFUL in 8s
+4 actionable tasks: 1 executed, 3 up-to-date
 ```
 
 Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json*):
@@ -313,7 +283,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
                 "path": "/provider.json",
                 "query": {
                     "validDate": [
-                        "2018-04-05T16:52:33.801"
+                        "2018-04-10T12:34:28.839"
                     ]
                 }
             },

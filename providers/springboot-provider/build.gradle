@@ -3,7 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.0.RELEASE")
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.1.RELEASE")
   }
 }
 
@@ -23,6 +23,10 @@ dependencies {
   }
   compile("org.springframework.boot:spring-boot-starter-jetty")
   compile("org.springframework.boot:spring-boot-starter-actuator")
+}
+
+springBoot {
+  mainClassName = 'au.com.dius.pactworkshop.springbootprovider.MainApplication'
 }
 
 task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
