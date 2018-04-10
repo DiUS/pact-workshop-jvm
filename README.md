@@ -13,38 +13,35 @@ Given we have a client that needs to make a HTTP GET request to a provider servi
 
 The client is quite simple and looks like this
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-class Client {
-
-  def loadProviderJson() {
-    def http = new RESTClient('http://localhost:8080')
-    def response = http.get(path: '/provider.json', query: [validDate: LocalDateTime.now().toString()])
-    if (response.success) {
-      response.data
-    }
+```java
+public class Client {
+  public Object loadProviderJson() throws UnirestException {
+    return Unirest.get("http://localhost:8080/provider.json")
+      .queryString("validDate", LocalDateTime.now().toString())
+      .asJson().getBody();
   }
 }
 ```
 
 and the dropwizard provider resource
 
-*providers/dropwizard-provider/src/main/groovy/au/com/dius/pactworkshop/dropwizardprovider/RootResource.groovy:*
+*providers/dropwizard-provider/src/main/java/au/com/dius/pactworkshop/dropwizardprovider/RootResource.java:*
 
-```groovy
+```java
 @Path("/provider.json")
 @Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+public class RootResource {
 
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Object> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    LocalDateTime valid_time = LocalDateTime.parse(validDate.get());
+    Map<String, Object> result = new HashMap<>();
+    result.put("test", "NO");
+    result.put("validDate", LocalDateTime.now().toString());
+    result.put("count", 1000);
+    return result;
   }
 
 }
@@ -52,20 +49,20 @@ class RootResource {
 
 The springboot provider controller is similar
 
-*providers/springboot-provider/src/main/groovy/au/com/dius/pactworkshop/springbootprovider/RootController.groovy:*
+*providers/springboot-provider/src/main/java/au/com/dius/pactworkshop/springbootprovider/RootController.java:*
 
-```groovy
+```java
 @RestController
-class RootController {
+public class RootController {
 
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    def validTime = LocalDateTime.parse(validDate)
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", LocalDateTime.now().toString());
+    map.put("count", 1000);
+    return map;
   }
 
 }
@@ -86,16 +83,15 @@ $ ./gradlew :providers:dropwizard-provider:run
 Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
-
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
 
 > Task :consumer:run
-[test:NO, validDate:2018-04-05T16:27:43.243, count:1000]
+{"test":"NO","validDate":"2018-04-10T10:59:41.122","count":1000}
 
 
-BUILD SUCCESSFUL in 7s
-2 actionable tasks: 1 executed, 1 up-to-date
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
 ```
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
