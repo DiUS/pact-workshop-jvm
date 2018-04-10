@@ -716,25 +716,41 @@ After running our specs, the pact file will have 2 new interactions.
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "\"validDate is required\""
+          "body": {
+              "error": "validDate is required"
+          }
       },
-      "providerState": "data count > 0"
+      "providerStates": [
+          {
+              "name": "data count > 0"
+          }
+      ]
   },
   {
       "description": "a request with an invalid date parameter",
       "request": {
           "method": "GET",
           "path": "/provider.json",
-          "query": "validDate=This+is+not+a+date"
+          "query": {
+              "validDate": [
+                  "This is not a date"
+              ]
+          }
       },
       "response": {
           "status": 400,
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "\"'This is not a date' is not a date\""
+          "body": {
+              "error": "'This is not a date' is not a date"
+          }
       },
-      "providerState": "data count > 0"
+      "providerStates": [
+          {
+              "name": "data count > 0"
+          }
+      ]
   }
 ]
 ```
