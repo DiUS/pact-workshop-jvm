@@ -999,12 +999,20 @@ This adds a new interaction to the pact file:
       "request": {
           "method": "GET",
           "path": "/provider.json",
-          "query": "validDate=2017-05-22T13%3A34%3A41.515"
+          "query": {
+              "validDate": [
+                  "2018-04-10T16:12:27.142"
+              ]
+          }
       },
       "response": {
           "status": 404
       },
-      "providerState": "data count == 0"
+      "providerStates": [
+          {
+              "name": "data count == 0"
+          }
+      ]
   }
 
 ```
