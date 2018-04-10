@@ -13,17 +13,14 @@ Given we have a client that needs to make a HTTP GET request to a provider servi
 
 The client is quite simple and looks like this
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-class Client {
-
-  def loadProviderJson() {
-    def http = new RESTClient('http://localhost:8080')
-    def response = http.get(path: '/provider.json', query: [validDate: LocalDateTime.now().toString()])
-    if (response.success) {
-      response.data
-    }
+```java
+public class Client {
+  public Object loadProviderJson() throws UnirestException {
+    return Unirest.get("http://localhost:8080/provider.json")
+      .queryString("validDate", LocalDateTime.now().toString())
+      .asJson().getBody();
   }
 }
 ```
@@ -86,16 +83,15 @@ $ ./gradlew :providers:dropwizard-provider:run
 Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
-
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
 
 > Task :consumer:run
-[test:NO, validDate:2018-04-05T16:27:43.243, count:1000]
+{"test":"NO","validDate":"2018-04-10T10:59:41.122","count":1000}
 
 
-BUILD SUCCESSFUL in 7s
-2 actionable tasks: 1 executed, 1 up-to-date
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
 ```
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
