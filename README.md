@@ -259,10 +259,10 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
 ```console
 $ ./gradlew :consumer:check
-Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
+Starting a Gradle Daemon, 1 incompatible and 3 stopped Daemons could not be reused, use --status for details
 
-BUILD SUCCESSFUL in 17s
-3 actionable tasks: 3 executed
+BUILD SUCCESSFUL in 8s
+4 actionable tasks: 1 executed, 3 up-to-date
 ```
 
 Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json*):
@@ -283,7 +283,7 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
                 "path": "/provider.json",
                 "query": {
                     "validDate": [
-                        "2018-04-05T16:52:33.801"
+                        "2018-04-10T12:34:28.839"
                     ]
                 }
             },
