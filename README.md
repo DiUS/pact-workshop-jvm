@@ -13,38 +13,35 @@ Given we have a client that needs to make a HTTP GET request to a provider servi
 
 The client is quite simple and looks like this
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-class Client {
-
-  def loadProviderJson() {
-    def http = new RESTClient('http://localhost:8080')
-    def response = http.get(path: '/provider.json', query: [validDate: LocalDateTime.now().toString()])
-    if (response.success) {
-      response.data
-    }
+```java
+public class Client {
+  public Object loadProviderJson() throws UnirestException {
+    return Unirest.get("http://localhost:8080/provider.json")
+      .queryString("validDate", LocalDateTime.now().toString())
+      .asJson().getBody();
   }
 }
 ```
 
 and the dropwizard provider resource
 
-*providers/dropwizard-provider/src/main/groovy/au/com/dius/pactworkshop/dropwizardprovider/RootResource.groovy:*
+*providers/dropwizard-provider/src/main/java/au/com/dius/pactworkshop/dropwizardprovider/RootResource.java:*
 
-```groovy
+```java
 @Path("/provider.json")
 @Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+public class RootResource {
 
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Object> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    LocalDateTime valid_time = LocalDateTime.parse(validDate.get());
+    Map<String, Object> result = new HashMap<>();
+    result.put("test", "NO");
+    result.put("validDate", LocalDateTime.now().toString());
+    result.put("count", 1000);
+    return result;
   }
 
 }
@@ -52,20 +49,20 @@ class RootResource {
 
 The springboot provider controller is similar
 
-*providers/springboot-provider/src/main/groovy/au/com/dius/pactworkshop/springbootprovider/RootController.groovy:*
+*providers/springboot-provider/src/main/java/au/com/dius/pactworkshop/springbootprovider/RootController.java:*
 
-```groovy
+```java
 @RestController
-class RootController {
+public class RootController {
 
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    def validTime = LocalDateTime.parse(validDate)
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", LocalDateTime.now().toString());
+    map.put("count", 1000);
+    return map;
   }
 
 }
@@ -77,70 +74,78 @@ This providers expects a `validDate` parameter in HTTP date format, and then ret
 ![Sequence Diagram](diagrams/sequence_diagram.png)
 
 
-Running the client with either provider works nicely.
+Running the client with either provider works nicely. For example, start the dropwizard-provider in one terminal:
+
+```console
+$ ./gradlew :providers:dropwizard-provider:run
+```
+
+Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status for details
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:run
-[test:NO, validDate:2017-01-27T11:49:04.131, count:1000]
 
-BUILD SUCCESSFUL
+> Task :consumer:run
+{"test":"NO","validDate":"2018-04-10T10:59:41.122","count":1000}
+
+
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
 ```
+
+Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
 
 ## Step 2 - Client Tested but integration fails
 
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-  def fetchAndProcessData() {
-    def data = loadProviderJson()
-    println "data=$data"
-    def value = 100 / data.count
-    def date = LocalDateTime.parse(data.date)
-    println "value=$value"
-    println "date=$date"
-    [value, date]
+```java
+  public List<Object> fetchAndProcessData() throws UnirestException {
+      JsonNode data = loadProviderJson();
+      System.out.println("data=" + data);
+
+      JSONObject jsonObject = data.getObject();
+      int value = 100 / jsonObject.getInt("count");
+      ZonedDateTime date = ZonedDateTime.parse(jsonObject.getString("date"));
+
+      System.out.println("value=" + value);
+      System.out.println("date=" + date);
+      return Arrays.asList(value, date);
   }
 ```
 
 ![Sequence 2](diagrams/step2_sequence_diagram.png)
 
-Let's now test our updated client.
+Let's now test our updated client. We're using [Wiremock](http://wiremock.org/) here to mock out the provider.
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientSpec.groovy:*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientTest.java:*
 
-```groovy
-class ClientSpec extends Specification {
+```java
+public class ClientTest {
 
-  private Client client
-  private RESTClient mockHttp
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(8080);
 
-  def setup() {
-    mockHttp = Mock(RESTClient)
-    client = new Client(http: mockHttp)
-  }
+  @Test
+  public void canProcessTheJsonPayloadFromTheProvider() throws UnirestException {
 
-  def 'can process the json payload from the provider'() {
-    given:
-    def json = [
-      test: 'NO',
-      date: '2013-08-16T15:31:20+10:00',
-      count: 100
-    ]
+    String date = "2013-08-16T15:31:20+10:00";
 
-    when:
-    def result = client.fetchAndProcessData()
+    stubFor(get(urlPathEqualTo("/provider.json"))
+      .withQueryParam("validDate", matching(".+"))
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withHeader("Content-Type", "application/json")
+        .withBody("{\"test\": \"NO\", \"date\": \"" + date + "\", \"count\": 100}")));
 
-    then:
-    1 * mockHttp.get(_) >> [data: json, success: true]
-    result == [1, ZonedDateTime.parse(json.date)]
+    List<Object> data = new Client().fetchAndProcessData();
+
+    assertThat(data, hasSize(2));
+    assertThat(data.get(0), is(1));
+    assertThat(data.get(1), is(ZonedDateTime.parse(date)));
   }
 
 }
@@ -152,18 +157,9 @@ Let's run this spec and see it all pass:
 
 ```console
 $ ./gradlew :consumer:check
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy
-:consumer:processResources UP-TO-DATE
-:consumer:classes
-:consumer:compileTestJava UP-TO-DATE
-:consumer:compileTestGroovy
-:consumer:processTestResources UP-TO-DATE
-:consumer:testClasses
-:consumer:test
-:consumer:check
 
-BUILD SUCCESSFUL
+BUILD SUCCESSFUL in 0s
+3 actionable tasks: 3 up-to-date
 ```
 
 However, there is a problem with this integration point. Running the actual client against any of the providers results in
@@ -171,50 +167,33 @@ However, there is a problem with this integration point. Running the actual clie
 
 ```console
 $ ./gradlew :consumer:run
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:run
-data=[test:NO, validDate:2017-01-27T14:21:23.174, count:1000]
-Exception in thread "main" java.lang.NullPointerException: text
-        at java.util.Objects.requireNonNull(Objects.java:228)
-        at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1848)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:597)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:582)
-        at java_time_ZonedDateTime$parse.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)
-        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.groovy:26)
-        at au.com.dius.pactworkshop.consumer.Client$fetchAndProcessData.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:117)
-        at au.com.dius.pactworkshop.consumer.Consumer.run(Consumer.groovy:3)
-        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.lang.reflect.Method.invoke(Method.java:498)
-        at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
-        at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1218)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1027)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
-        at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
-        at org.codehaus.groovy.runtime.InvokerHelper$runScript.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:133)
-        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
-:consumer:run FAILED
+
+> Task :consumer:run FAILED
+data={"test":"NO","validDate":"2018-04-10T11:48:36.838","count":1000}
+Exception in thread "main" org.json.JSONException: JSONObject["date"] not found.
+        at org.json.JSONObject.get(JSONObject.java:471)
+        at org.json.JSONObject.getString(JSONObject.java:717)
+        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.java:26)
+        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.java:7)
+
 
 FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':consumer:run'.
+> Process 'command '/usr/lib/jvm/java-8-oracle/bin/java'' finished with non-zero exit value 1
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 1s
+2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
-The provider returns a `validDate` while the consumer is
-trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
+The provider returns a `validDate` while the consumer is trying to use `date`, which will blow up when run for
+real even with the tests all passing. Here is where Pact comes in.
 
 ## Step 3 - Pact to the rescue
 
@@ -280,18 +259,10 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
 ```console
 $ ./gradlew :consumer:check
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:compileTestJava UP-TO-DATE
-:consumer:compileTestGroovy UP-TO-DATE
-:consumer:processTestResources UP-TO-DATE
-:consumer:testClasses UP-TO-DATE
-:consumer:test
-:consumer:check
+Starting a Gradle Daemon, 1 incompatible and 3 stopped Daemons could not be reused, use --status for details
 
-BUILD SUCCESSFUL
+BUILD SUCCESSFUL in 8s
+4 actionable tasks: 1 executed, 3 up-to-date
 ```
 
 Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json*):
@@ -310,7 +281,11 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
             "request": {
                 "method": "GET",
                 "path": "/provider.json",
-                "query": "validDate=2017-05-22T10%3A16%3A29.732"
+                "query": {
+                    "validDate": [
+                        "2018-04-10T12:34:28.839"
+                    ]
+                }
             },
             "response": {
                 "status": 200,
@@ -323,15 +298,19 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
                     "count": 100
                 }
             },
-            "providerState": "data count > 0"
+            "providerStates": [
+                {
+                    "name": "data count > 0"
+                }
+            ]
         }
     ],
     "metadata": {
         "pact-specification": {
-            "version": "2.0.0"
+            "version": "3.0.0"
         },
         "pact-jvm": {
-            "version": "3.4.0"
+            "version": "3.5.14"
         }
     }
 }
@@ -343,9 +322,17 @@ There are two ways of validating a pact file against a provider. The first is us
 execute the pact against the running service. The second is to write a pact verification test. We will be doing both
 in this step.
 
-First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
+First, we need to **publish** the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
 main project to do this.
 
+```console
+$ ./gradlew publishWorkshopPact
+
+BUILD SUCCESSFUL in 0s
+2 actionable tasks: 2 up-to-dat
+```
+
+The Pact file from the consumer project will now exist in the build directory of the two provider projects.
 
 ![Pact Verification](diagrams/step4_pact.png)
 
@@ -355,11 +342,13 @@ main project to do this.
 For the springboot provider, we are going to use Gradle to verify the pact file for us. We need to add the pact gradle
 plugin and the spawn plugin to the project and configure them.
 
+**NOTE: This will not work on Windows, as the Gradle spawn plugin will not work with Windows.**
+
 *providers/springboot-provider/build.gradle:*
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.4.0"
+  id "au.com.dius.pact" version "3.5.14"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -376,7 +365,7 @@ task stopProvider(type: KillProcessTask) {
 
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider
@@ -394,16 +383,8 @@ Now if we copy the pact file from the consumer project and run our pact verifica
 
 ```console
 $ ./gradlew :providers:springboot-provider:pactVerify
-Starting a Gradle Daemon (subsequent builds will be faster)
-:providers:springboot-provider:compileJava UP-TO-DATE
-:providers:springboot-provider:compileGroovy UP-TO-DATE
-:providers:springboot-provider:processResources UP-TO-DATE
-:providers:springboot-provider:classes UP-TO-DATE
-:providers:springboot-provider:findMainClass
-:providers:springboot-provider:jar
-:providers:springboot-provider:bootRepackage
-:providers:springboot-provider:assemble
-:providers:springboot-provider:startProvider
+
+> Task :providers:springboot-provider:startProvider
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -411,22 +392,19 @@ Starting a Gradle Daemon (subsequent builds will be faster)
  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::        (v1.4.4.RELEASE)
+ :: Spring Boot ::        (v2.0.0.RELEASE)
 ```
 
 ... omitting lots of logs ...
 
 ```console
-2017-01-27 16:04:36.817  INFO 17300 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 3.422 seconds (JVM running for 3.952)
+2018-04-10 13:55:19.709  INFO 7912 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 3.311 seconds (JVM running for 3.774)
 java -jar /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/libs/springboot-provider.jar is ready.
-:providers:springboot-provider:compileTestJava UP-TO-DATE
-:providers:springboot-provider:compileTestGroovy UP-TO-DATE
-:providers:springboot-provider:processTestResources UP-TO-DATE
-:providers:springboot-provider:testClasses UP-TO-DATE
-:providers:springboot-provider:pactVerify_Our Provider
 
-Verifying a pact between Our Little Consumer and Our Provider
-  [Using file /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
+> Task :providers:springboot-provider:pactVerify_Our_Provider FAILED
+
+Verifying a pact between Our Little Consumer and Our_Provider
+  [Using File /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
   a request for json data
@@ -438,33 +416,35 @@ Verifying a pact between Our Little Consumer and Our Provider
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
             "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
         -    "count": 100
-        +    "validDate": "2017-05-22T10:39:28.137",
-        +    "count": 1000
+        +    "count": 1000,
+        +    "validDate": "2018-04-10T13:55:20.318"
         }
 
-      $.body.count -> Expected 100 but received 1000
+      $.count -> Expected 100 but received 1000
 
 
-:providers:springboot-provider:pactVerify_Our Provider FAILED
-:providers:springboot-provider:stopProvider
+
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-There were 1 pact failures for provider Our Provider
+There were 1 pact failures for provider Our_Provider
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 7s
+5 actionable tasks: 5 executed
 ```
 
 The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer.
@@ -473,27 +453,28 @@ field. Also, the date formats are different.
 
 ## Step 5 - Verify the provider with a test
 
-In this step we will verify the same pact file against the Dropwizard provider using a JUnit test. First we copy it over,
-or 'publish' it to our provider project.
+In this step we will verify the same pact file against the Dropwizard provider using a JUnit test. If you need to, 
+re-run the `publishWorkshopPact` to get the pact file in the provider project.
 
 We add the pact provider junit jar and the dropwizard testing jar to our project dependencies, and then we can create a
 simple test to verify our provider.
 
-```groovy
-@RunWith(PactRunner)
-@Provider('Our Provider')
-@PactFolder('build/pacts')
-class PactVerificationTest {
-
+```java
+@RunWith(PactRunner.class)
+@Provider("Our Provider")
+@PactFolder("build/pacts")
+public class PactVerificationTest {
   @ClassRule
-  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication,
-    ResourceHelpers.resourceFilePath("main-app-config.yaml"))
+  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication.class,
+    ResourceHelpers.resourceFilePath("main-app-config.yaml"));
 
   @TestTarget
-  public final Target target = new HttpTarget(8080)
+  public final Target target = new HttpTarget(8080);
 
   @State("data count > 0")
-  void dataCountGreaterThanZero() { }
+  public void dataCountGreaterThanZero() {
+
+  }
 }
 ```
 
@@ -504,21 +485,15 @@ Running this test will fail for the same reasons as in step 4.
 
 ```console
 $ ./gradlew :providers:dropwizard-provider:test
-:providers:dropwizard-provider:compileJava UP-TO-DATE
-:providers:dropwizard-provider:compileGroovy UP-TO-DATE
-:providers:dropwizard-provider:processResources UP-TO-DATE
-:providers:dropwizard-provider:classes UP-TO-DATE
-:providers:dropwizard-provider:compileTestJava UP-TO-DATE
-:providers:dropwizard-provider:compileTestGroovy
-:providers:dropwizard-provider:processTestResources UP-TO-DATE
-:providers:dropwizard-provider:testClasses
-:providers:dropwizard-provider:test
+Starting a Gradle Daemon, 1 incompatible and 2 stopped Daemons could not be reused, use --status for details
+
+> Task :providers:dropwizard-provider:test 
 
 au.com.dius.pactworkshop.dropwizardprovider.PactVerificationTest > Our Little Consumer - a request for json data FAILED
     java.lang.AssertionError
 
 1 test completed, 1 failed
-:providers:dropwizard-provider:test FAILED
+
 
 FAILURE: Build failed with an exception.
 
@@ -527,9 +502,12 @@ Execution failed for task ':providers:dropwizard-provider:test'.
 > There were failing tests. See the report at: file:///home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/dropwizard-provider/build/reports/tests/test/index.html
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 12s
+4 actionable tasks: 4 executed
 ```
 
 The JUnit build report has the expected failures (standard output shown here).
@@ -547,18 +525,19 @@ Verifying a pact between Our Little Consumer and Our Provider
 Failures:
 
 0) a request for json data returns a response which has a matching body
-      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
             "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
         -    "count": 100
-        +    "validDate": "2017-01-27T16:53:32.291",
-        +    "count": 1000
+        +    "count": 1000,
+        +    "validDate": "2018-04-10T14:15:04.902"
         }
 
-      $.body.count -> Expected 100 but received 1000
+      $.count -> Expected 100 but received 1000
+
 ```
 
 ## Step 6 - Back to the client we go
@@ -585,15 +564,19 @@ The updated consumer test is now:
 
 Running this test will fail until we fix the client. Here is the correct client function:
 
-```groovy
-  def fetchAndProcessData(LocalDateTime dateTime) {
-    def data = loadProviderJson(dateTime)
-    println "data=$data"
-    def value = 100 / data.count
-    def date = OffsetDateTime.parse(data.validDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
-    println "value=$value"
-    println "date=$date"
-    [value, date]
+```java
+  public List<Object> fetchAndProcessData(LocalDateTime dateTime) throws UnirestException {
+      JsonNode data = loadProviderJson(dateTime);
+      System.out.println("data=" + data);
+  
+      JSONObject jsonObject = data.getObject();
+      int value = 100 / jsonObject.getInt("count");
+      OffsetDateTime date = OffsetDateTime.parse(jsonObject.getString("validDate"),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+  
+      System.out.println("value=" + value);
+      System.out.println("date=" + date);
+      return Arrays.asList(value, date);
   }
 ```
 
@@ -601,77 +584,61 @@ Now the test passes. But we still have a problem with the date format, which we 
 client now fails because of that.
 
 ```console
-$ ./gradlew :consumer:run
-Starting a Gradle Daemon, 1 busy Daemon could not be reused, use --status for details
-:consumer:compileJava UP-TO-DATE
-:consumer:compileGroovy UP-TO-DATE
-:consumer:processResources UP-TO-DATE
-:consumer:classes UP-TO-DATE
-:consumer:run
-data=[test:NO, validDate:2017-01-27T17:26:13.911, count:1000]
-Exception in thread "main" java.time.format.DateTimeParseException: Text '2017-01-27T17:26:13.911' could not be parsed at index 23
+$ ./gradlew consumer:run
+Starting a Gradle Daemon, 1 busy and 1 incompatible and 2 stopped Daemons could not be reused, use --status for details
+
+> Task :consumer:run FAILED
+data={"test":"NO","validDate":"2018-04-10T14:39:50.419","count":1000}
+Exception in thread "main" java.time.format.DateTimeParseException: Text '2018-04-10T14:39:50.419' could not be parsed at index 19
         at java.time.format.DateTimeFormatter.parseResolved0(DateTimeFormatter.java:1949)
         at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1851)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:597)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:582)
-        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
-        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.groovy:30)
-        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
-        at au.com.dius.pactworkshop.consumer.Consumer.run(Consumer.groovy:5)
-        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.lang.reflect.Method.invoke(Method.java:498)
-        at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
-        at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1218)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1027)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
-        at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
-        at org.codehaus.groovy.vmplugin.v7.IndyInterface.selectMethod(IndyInterface.java:232)
-        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
-:consumer:run FAILED
+        at java.time.OffsetDateTime.parse(OffsetDateTime.java:402)
+        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.java:34)
+        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.java:9)
+
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
 Execution failed for task ':consumer:run'.
-> Process 'command '/usr/lib/jvm/java-8-openjdk-amd64/bin/java'' finished with non-zero exit value 1
+> Process 'command '/usr/lib/jvm/java-8-oracle/bin/java'' finished with non-zero exit value 1
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 5s
+2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
-## Step 7 - Verify the providers again
-
-We need to 'publish' the consumer pact file to the provider projects again. Then, running the provider verification
+We need to **publish** the consumer pact file to the provider projects again. Then, running the provider verification
 tests we get the expected failure about the date format.
 
 ```
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.body.validDate -> Expected '2017-01-27T17:33:52.293' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2017-01-27T17:33:52.293
+0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $.validDate -> Expected '2018-04-10T14:49:57.675' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2018-04-10T14:49:57.675
+
 ```
+
+## Step 7 - Verify the providers again
 
 Lets fix the providers and then re-run the verification tests. Here is the corrected Dropwizard resource:
 
-```groovy
-@Path("/provider.json")
-@Produces(MediaType.APPLICATION_JSON)
-class RootResource {
+```java
+@RestController
+public class RootController {
 
-  @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    def valid_time = LocalDateTime.parse(validDate.get())
-    [
-      test: 'NO',
-      validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-      count: 1000
-    ]
+  @RequestMapping("/provider.json")
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+    map.put("count", 1000);
+    return map;
   }
 
 }
@@ -749,32 +716,48 @@ After running our specs, the pact file will have 2 new interactions.
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "\"validDate is required\""
+          "body": {
+              "error": "validDate is required"
+          }
       },
-      "providerState": "data count > 0"
+      "providerStates": [
+          {
+              "name": "data count > 0"
+          }
+      ]
   },
   {
       "description": "a request with an invalid date parameter",
       "request": {
           "method": "GET",
           "path": "/provider.json",
-          "query": "validDate=This+is+not+a+date"
+          "query": {
+              "validDate": [
+                  "This is not a date"
+              ]
+          }
       },
       "response": {
           "status": 400,
           "headers": {
               "Content-Type": "application/json"
           },
-          "body": "\"'This is not a date' is not a date\""
+          "body": {
+              "error": "'This is not a date' is not a date"
+          }
       },
-      "providerState": "data count > 0"
+      "providerStates": [
+          {
+              "name": "data count > 0"
+          }
+      ]
   }
 ]
 ```
 
 ## Step 9 - Verify the provider with the missing/invalid date query parameter
    
-Let us run this updated pact file with our providers. We get a 500 response as the provider can't handle the missing 
+Let us run this updated pact file with our providers (use the `publishWorkshopPact` task). We get a 500 response as the provider can't handle the missing
 or incorrect date.
 
 Here is the dropwizard test output:
@@ -783,33 +766,42 @@ Here is the dropwizard test output:
 Verifying a pact between Our Little Consumer and Our Provider
   Given data count > 0
   a request with a missing date parameter
-      returns a response which
-        has status code 400 (FAILED)
-        includes headers
-          "Content-Type" with value "application/json" (OK)
-        has a matching body (FAILED)
-  
-  Failures:
-  
-  0) a request with a missing date parameter returns a response which has a matching body
-        $.body -> Expected 'validDate is required' but received Map(code -> 500, message -> There was an error processing your request. It has been logged (ID 57cd4a2eae1d5293).)
-  
-  
-  1) a request with a missing date parameter returns a response which has status code 400
-        assert expectedStatus == actualStatus
-               |              |  |
-               400            |  500
-                              false
-  
+    returns a response which
+      has status code 400 (FAILED)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+Failures:
+
+0) a request with a missing date parameter returns a response which has a matching body
+      $ -> Expected error='validDate is required' but was missing
+
+        Diff:
+
+        {
+        -    "error": "validDate is required"
+        +    "code": 500,
+        +    "message": "There was an error processing your request. It has been logged (ID 15c8b3719074eb84)."
+        }
+
+
+1) a request with a missing date parameter returns a response which has status code 400
+      assert expectedStatus == actualStatus
+             |              |  |
+             400            |  500
+                            false
+
+
 ```
 
 and the springboot build output:
 
 ```console
-:providers:springboot-provider:pactVerify_Our Provider
+> Task :providers:springboot-provider:pactVerify_Our_Provider
 
-Verifying a pact between Our Little Consumer and Our Provider
-  [Using file /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
+Verifying a pact between Our Little Consumer and Our_Provider
+  [Using File /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
   a request for json data
@@ -837,38 +829,40 @@ Verifying a pact between Our Little Consumer and Our Provider
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our Provider - a request with a missing date parameter Given data count > 0 returns a response which has status code 400
+0) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0 returns a response which has status code 400
       assert expectedStatus == actualStatus
              |              |  |
              400            |  500
                             false
 
-1) Verifying a pact between Our Little Consumer and Our Provider - a request with a missing date parameter Given data count > 0 returns a response which has a matching body
-      $.body -> Expected 'validDate is required' but received Map(path -> /provider.json, timestamp -> 1490922210835, exception -> java.lang.NullPointerException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.lang.NullPointerException: text)
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0 returns a response which has a matching body
+      $.error -> Expected 'validDate is required' but received 'Internal Server Error'
 
 
-2) Verifying a pact between Our Little Consumer and Our Provider - a request with an invalid date parameter Given data count > 0 returns a response which has status code 400
+2) Verifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameter Given data count > 0 returns a response which has status code 400
       assert expectedStatus == actualStatus
              |              |  |
              400            |  500
                             false
 
-3) Verifying a pact between Our Little Consumer and Our Provider - a request with an invalid date parameter Given data count > 0 returns a response which has a matching body
-      $.body -> Expected ''This is not a date' is not a date' but received Map(path -> /provider.json, timestamp -> 1490922210891, exception -> java.time.format.DateTimeParseException, error -> Internal Server Error, status -> 500, message -> org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.time.format.DateTimeParseException: Text 'This is not a date' could not be parsed at index 0)
+3) Verifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameter Given data count > 0 returns a response which has a matching body
+      $.error -> Expected ''This is not a date' is not a date' but received 'Internal Server Error'
 
 
-:providers:springboot-provider:pactVerify_Our Provider FAILED
-:providers:springboot-provider:stopProvider
+
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-There were 4 pact failures for provider Our Provider
+There were 4 pact failures for provider Our_Provider
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 8s
+5 actionable tasks: 4 executed, 1 up-to-date
 ```
 
 Time to update the providers to handle these cases.
@@ -882,36 +876,36 @@ Let's fix our providers so they generate the correct responses for the query par
 The Dropwizard root resource gets updated to check if the parameter has been passed, and handle the date parse exception
 if it is invalid. Two new exceptions get thrown for these cases.
 
-```groovy
+```java
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    if (validDate.present) {
+  public Map<String, Serializable> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    if (validDate.isPresent()) {
       try {
-        def valid_time = LocalDateTime.parse(validDate.get())
-        [
-          test: 'NO',
-          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-          count: 1000
-        ]
-      } catch (e) {
-        throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+        LocalDateTime validTime = LocalDateTime.parse(validDate.get());
+        Map<String, Serializable> result = new HashMap<>(3);
+        result.put("test", "NO");
+        result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+        result.put("count", 1000);
+        return result;
+      } catch (DateTimeParseException e) {
+        throw new InvalidQueryParameterException("'" + validDate.get() + "' is not a date", e);
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 Next step is to create exception mappers for the new exceptions, and register them with the Dropwizard environment.
 
-```groovy
-class InvalidQueryParameterExceptionMapper implements ExceptionMapper<InvalidQueryParameterException> {
+```java
+public class InvalidQueryParameterExceptionMapper implements ExceptionMapper<InvalidQueryParameterException> {
   @Override
-  Response toResponse(InvalidQueryParameterException exception) {
-    Response.status(Response.Status.BAD_REQUEST)
+  public Response toResponse(InvalidQueryParameterException exception) {
+    return Response.status(Response.Status.BAD_REQUEST)
       .type(MediaType.APPLICATION_JSON_TYPE)
-      .entity(JsonOutput.toJson(exception.message))
-      .build()
+      .entity("{\"error\": \"" + exception.getMessage() + "\"}")
+      .build();
   }
 }
 ```
@@ -932,38 +926,38 @@ Now running the `PactVerificationTest` will pass.
 
 The Springboot root controller gets updated in a similar way to the Dropwizard resource.
 
-```groovy
+```java
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    if (validDate) {
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    if (StringUtils.isNotEmpty(validDate)) {
       try {
-        def valid_time = LocalDateTime.parse(validDate)
-        [
-          test: 'NO',
-          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-          count: 1000
-        ]
-      } catch (e) {
-        throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+        LocalDateTime validTime = LocalDateTime.parse(validDate);
+        Map<String, Serializable> map = new HashMap<>(3);
+        map.put("test", "NO");
+        map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+        map.put("count", 1000);
+        return map;
+      } catch (DateTimeParseException e) {
+        throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 Then, to get the exceptions mapped to the correct response, we need to create a controller advice.
 
-```groovy
-@ControllerAdvice(basePackageClasses = RootController)
-class RootControllerAdvice extends ResponseEntityExceptionHandler {
-
-  @ExceptionHandler([InvalidQueryParameterException, QueryParameterRequiredException])
+```java
+@ControllerAdvice(basePackageClasses = RootController.class)
+public class RootControllerAdvice extends ResponseEntityExceptionHandler {
+  @ExceptionHandler({InvalidQueryParameterException.class, QueryParameterRequiredException.class})
   @ResponseBody
-  ResponseEntity handleControllerException(HttpServletRequest request, Throwable ex) {
-    new ResponseEntity(JsonOutput.toJson(ex.message), HttpStatus.BAD_REQUEST)
+  public ResponseEntity<String> handleControllerException(HttpServletRequest request, Throwable ex) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>("{\"error\": \"" + ex.getMessage() + "\"}", headers, HttpStatus.BAD_REQUEST);
   }
-
 }
 ```
 
@@ -1005,12 +999,20 @@ This adds a new interaction to the pact file:
       "request": {
           "method": "GET",
           "path": "/provider.json",
-          "query": "validDate=2017-05-22T13%3A34%3A41.515"
+          "query": {
+              "validDate": [
+                  "2018-04-10T16:12:27.142"
+              ]
+          }
       },
       "response": {
           "status": 404
       },
-      "providerState": "data count == 0"
+      "providerStates": [
+          {
+              "name": "data count == 0"
+          }
+      ]
   }
 
 ```
