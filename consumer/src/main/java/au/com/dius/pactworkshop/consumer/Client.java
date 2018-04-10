@@ -51,7 +51,7 @@ public class Client {
       System.out.println("date=" + date);
       return Arrays.asList(value, date);
     } else {
-      return null;
+      return Arrays.asList(0, null);
     }
   }
 }
