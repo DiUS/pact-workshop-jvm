@@ -1228,7 +1228,8 @@ pact {
 ```
 
 Now, we can run `./gradlew consumer:pactPublish` after running the consumer tests to have the generated pact file 
-published to the broker. Afterwards, you can navigate to the Pact Broker URL and see the published pact there.
+published to the broker. Afterwards, you can navigate to the Pact Broker URL and see the published pact against
+the consumer and provider names setup in our consumer test.
 
 ### Dropwizard provider
 
@@ -1246,28 +1247,27 @@ test {
 
 Updated test:
 
-```groovy
-@RunWith(PactRunner)
-@Provider('Our Provider')
-@PactBroker(host = 'test.pact.dius.com.au', protocol = 'https', port = "443",
-  authentication = @PactBrokerAuth(username = '${pactBrokerUser}', password = '${pactBrokerPassword}'))
-class PactVerificationTest {
-
+```java
+@RunWith(PactRunner.class)
+@Provider("Our Provider")
+@PactBroker(host = "test.pact.dius.com.au", protocol = "https", port = "443",
+  authentication = @PactBrokerAuth(username = "${pactBrokerUser}", password = "${pactBrokerPassword}"))
+public class PactVerificationTest {
   @ClassRule
-  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication,
-    ResourceHelpers.resourceFilePath("main-app-config.yaml"))
+  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication.class,
+    ResourceHelpers.resourceFilePath("main-app-config.yaml"));
 
   @TestTarget
-  public final Target target = new HttpTarget(8080)
+  public final Target target = new HttpTarget(8080);
 
   @State("data count > 0")
-  void dataCountGreaterThanZero() {
-    DataStore.instance.dataCount = 1000
+  public void dataCountGreaterThanZero() {
+    DataStore.INSTANCE.setDataCount(1000);
   }
 
   @State("data count == 0")
-  void dataCountZero() {
-    DataStore.instance.dataCount = 0
+  public void dataCountZero() {
+    DataStore.INSTANCE.setDataCount(0);
   }
 }
 ```
@@ -1282,7 +1282,7 @@ Updated build file:
 ```groovy
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider
@@ -1294,3 +1294,6 @@ pact {
   }
 }
 ```
+
+Running either of the verification tests will now publish the result back to the broker. If you refresh the index page in the broker,
+you will see the pacts marked as verified.

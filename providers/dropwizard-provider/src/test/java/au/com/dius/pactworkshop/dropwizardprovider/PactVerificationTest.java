@@ -17,7 +17,6 @@ import org.junit.runner.RunWith;
 @Provider("Our Provider")
 @PactBroker(host = "test.pact.dius.com.au", protocol = "https", port = "443",
   authentication = @PactBrokerAuth(username = "${pactBrokerUser}", password = "${pactBrokerPassword}"))
-
 public class PactVerificationTest {
   @ClassRule
   public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication.class,
