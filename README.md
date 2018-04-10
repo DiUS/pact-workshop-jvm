@@ -100,23 +100,26 @@ Don't forget to stop the dropwizard-provider that is running in the first termin
 
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
-*consumer/src/main/groovy/au/com/dius/pactworkshop/consumer/Client.groovy:*
+*consumer/src/main/java/au/com/dius/pactworkshop/consumer/Client.java:*
 
-```groovy
-  def fetchAndProcessData() {
-    def data = loadProviderJson()
-    println "data=$data"
-    def value = 100 / data.count
-    def date = LocalDateTime.parse(data.date)
-    println "value=$value"
-    println "date=$date"
-    [value, date]
+```java
+  public List<Object> fetchAndProcessData() throws UnirestException {
+      JsonNode data = loadProviderJson();
+      System.out.println("data=" + data);
+
+      JSONObject jsonObject = data.getObject();
+      int value = 100 / jsonObject.getInt("count");
+      ZonedDateTime date = ZonedDateTime.parse(jsonObject.getString("date"));
+
+      System.out.println("value=" + value);
+      System.out.println("date=" + date);
+      return Arrays.asList(value, date);
   }
 ```
 
 ![Sequence 2](diagrams/step2_sequence_diagram.png)
 
-Let's now test our updated client.
+Let's now test our updated client. We're using [Wiremock](http://wiremock.org/) here to mock out the provider.
 
 *consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientTest.java:*
 
