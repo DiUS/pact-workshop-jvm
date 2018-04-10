@@ -25,7 +25,7 @@ public class RootController {
           Map<String, Serializable> map = new HashMap<>(3);
           map.put("test", "NO");
           map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
-          map.put("count", 1000);
+          map.put("count", DataStore.INSTANCE.getDataCount());
           return map;
         } catch (DateTimeParseException e) {
           throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);

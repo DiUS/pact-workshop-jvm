@@ -1029,62 +1029,71 @@ The dropwizard provider is being verified by a test, so we can setup methods ann
 controller appropriately. First, we need some data store that we could manipulate. For out case, we are just going to
 use a singleton class, but in a real project you would probably use a database.
 
-```groovy
-@Singleton
-class DataStore {
-  int dataCount = 1000
+```java
+public class DataStore {
+  public static final DataStore INSTANCE = new DataStore();
+  private int dataCount = 1000;
+
+  private DataStore() { }
+
+  public int getDataCount() {
+    return dataCount;
+  }
+
+  public void setDataCount(int dataCount) {
+    this.dataCount = dataCount;
+  }
 }
 ```
 
 Next, we update out root resource to use the value from the data store, and throw an exception if there is no data.
 
-```groovy
+```java
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    if (validDate.present) {
-      if (DataStore.instance.dataCount > 0) {
+  public Map<String, Serializable> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    if (validDate.isPresent()) {
+      if (DataStore.INSTANCE.getDataCount() > 0) {
         try {
-          def valid_time = LocalDateTime.parse(validDate.get())
-          [
-            test     : 'NO',
-            validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-            count    : DataStore.instance.dataCount
-          ]
-        } catch (e) {
-          throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+          LocalDateTime validTime = LocalDateTime.parse(validDate.get());
+          Map<String, Serializable> result = new HashMap<>(3);
+          result.put("test", "NO");
+          result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          result.put("count", DataStore.INSTANCE.getDataCount());
+          return result;
+        } catch (DateTimeParseException e) {
+          throw new InvalidQueryParameterException("'" + validDate.get() + "' is not a date", e);
         }
       } else {
-        throw new NoDataException()
+        throw new NoDataException();
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 We do the same exception mapping for the new exception as we did before.
 
-```groovy
-class NoDataExceptionMapper implements ExceptionMapper<NoDataException> {
+```java
+public class NoDataExceptionMapper implements ExceptionMapper<NoDataException> {
   @Override
-  Response toResponse(NoDataException exception) {
-    Response.status(Response.Status.NOT_FOUND)
-      .build()
+  public Response toResponse(NoDataException exception) {
+    return Response.status(Response.Status.NOT_FOUND).build();
   }
 }
 ```
 
 Now we can change the data store value in our test based on the provider state.
 
-```groovy
+```java
   @State("data count > 0")
-  void dataCountGreaterThanZero() {
-    DataStore.instance.dataCount = 1000
+  public void dataCountGreaterThanZero() {
+    DataStore.INSTANCE.setDataCount(1000);
   }
 
   @State("data count == 0")
-  void dataCountZero() {
-    DataStore.instance.dataCount = 0
+  public void dataCountZero() {
+    DataStore.INSTANCE.setDataCount(0);
   }
 ```
 
@@ -1128,77 +1137,65 @@ task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
 
 Here is the state change controller:
 
-```groovy
+```java
 @RestController
 @Profile("test")
-class StateChangeController {
-
+public class StateChangeController {
   @RequestMapping(value = "/pactStateChange", method = RequestMethod.POST)
-  void providerState(@RequestBody Map body) {
-    switch (body.state) {
-      case 'data count > 0':
-        DataStore.instance.dataCount = 1000
-        break
-      case 'data count == 0':
-        DataStore.instance.dataCount = 0
-        break
+  public void providerState(@RequestBody Map body) {
+    if (body.get("state").equals("data count > 0")) {
+      DataStore.INSTANCE.setDataCount(1000);
+    } else if (body.get("state").equals("data count == 0")) {
+      DataStore.INSTANCE.setDataCount(0);
     }
   }
-
 }
 ```
 
 This controller will change the value of the datastore. We then use the datastore in our normal controller.
 
-```groovy
-@Singleton
-class DataStore {
-  int dataCount = 1000
-}
-```
-
-```groovy
+```java
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    if (validDate) {
-      if (DataStore.instance.dataCount > 0) {
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    if (StringUtils.isNotEmpty(validDate)) {
+      if (DataStore.INSTANCE.getDataCount() > 0) {
         try {
-          def valid_time = LocalDateTime.parse(validDate)
-          [
-            test     : 'NO',
-            validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-            count    : DataStore.instance.dataCount
-          ]
-        } catch (e) {
-          throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+          LocalDateTime validTime = LocalDateTime.parse(validDate);
+          Map<String, Serializable> map = new HashMap<>(3);
+          map.put("test", "NO");
+          map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          map.put("count", DataStore.INSTANCE.getDataCount());
+          return map;
+        } catch (DateTimeParseException e) {
+          throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);
         }
       } else {
-        throw new NoDataException()
+        throw new NoDataException();
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 and update our controller advice to return the 404 response when a `NoDataException` is raised.
 
-```groovy
-@ControllerAdvice(basePackageClasses = RootController)
-class RootControllerAdvice extends ResponseEntityExceptionHandler {
-
-  @ExceptionHandler([InvalidQueryParameterException, QueryParameterRequiredException])
+```java
+@ControllerAdvice(basePackageClasses = RootController.class)
+public class RootControllerAdvice extends ResponseEntityExceptionHandler {
+  @ExceptionHandler({InvalidQueryParameterException.class, QueryParameterRequiredException.class})
   @ResponseBody
-  ResponseEntity handleControllerException(HttpServletRequest request, Throwable ex) {
-    new ResponseEntity(JsonOutput.toJson(ex.message), HttpStatus.BAD_REQUEST)
+  public ResponseEntity<String> handleControllerException(HttpServletRequest request, Throwable ex) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>("{\"error\": \"" + ex.getMessage() + "\"}", headers, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(NoDataException)
+  @ExceptionHandler(NoDataException.class)
   @ResponseBody
   ResponseEntity handleNoDataException(HttpServletRequest request, Throwable ex) {
-    new ResponseEntity(HttpStatus.NOT_FOUND)
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
   }
-
 }
 ```
 
