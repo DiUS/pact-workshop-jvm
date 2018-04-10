@@ -40,7 +40,7 @@ task stopProvider(type: KillProcessTask) {
 
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider

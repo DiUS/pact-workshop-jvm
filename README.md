@@ -322,9 +322,17 @@ There are two ways of validating a pact file against a provider. The first is us
 execute the pact against the running service. The second is to write a pact verification test. We will be doing both
 in this step.
 
-First, we need to 'publish' the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
+First, we need to **publish** the pact file from the consumer project. For this workshop, we have a `publishWorkshopPact` task in the
 main project to do this.
 
+```console
+$ ./gradlew publishWorkshopPact
+
+BUILD SUCCESSFUL in 0s
+2 actionable tasks: 2 up-to-dat
+```
+
+The Pact file from the consumer project will now exist in the build directory of the two provider projects.
 
 ![Pact Verification](diagrams/step4_pact.png)
 
@@ -333,6 +341,8 @@ main project to do this.
 
 For the springboot provider, we are going to use Gradle to verify the pact file for us. We need to add the pact gradle
 plugin and the spawn plugin to the project and configure them.
+
+**NOTE: This will not work on Windows, as the Gradle spawn plugin will not work with Windows.**
 
 *providers/springboot-provider/build.gradle:*
 
@@ -355,7 +365,7 @@ task stopProvider(type: KillProcessTask) {
 
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider
@@ -388,12 +398,12 @@ $ ./gradlew :providers:springboot-provider:pactVerify
 ... omitting lots of logs ...
 
 ```console
-2018-04-05 17:20:53.361  INFO 14418 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 4.698 seconds (JVM running for 5.493)
+2018-04-10 13:55:19.709  INFO 7912 --- [           main] a.c.d.p.s.MainApplication                : Started MainApplication in 3.311 seconds (JVM running for 3.774)
 java -jar /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/libs/springboot-provider.jar is ready.
 
-> Task :providers:springboot-provider:pactVerify_Our Provider
+> Task :providers:springboot-provider:pactVerify_Our_Provider FAILED
 
-Verifying a pact between Our Little Consumer and Our Provider
+Verifying a pact between Our Little Consumer and Our_Provider
   [Using File /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
@@ -406,7 +416,7 @@ Verifying a pact between Our Little Consumer and Our Provider
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our Provider - a request for json dataVerifying a pact between Our Little Consumer and Our Provider - a request for json data Given data count > 0 returns a response which has a matching body
+0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
       $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
@@ -414,8 +424,8 @@ Failures:
             "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
         -    "count": 100
-        +    "validDate": "2018-04-05T17:20:55.021",
-        +    "count": 1000
+        +    "count": 1000,
+        +    "validDate": "2018-04-10T13:55:20.318"
         }
 
       $.count -> Expected 100 but received 1000
@@ -426,17 +436,14 @@ Failures:
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-There were 1 pact failures for provider Our Provider
+There were 1 pact failures for provider Our_Provider
 
 * Try:
 Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
 * Get more help at https://help.gradle.org
 
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 5.0.
-See https://docs.gradle.org/4.6/userguide/command_line_interface.html#sec:command_line_warnings
-
-BUILD FAILED in 11s
+BUILD FAILED in 7s
 5 actionable tasks: 5 executed
 ```
 
