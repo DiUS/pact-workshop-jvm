@@ -38,7 +38,7 @@ public class ClientTest {
         .withHeader("Content-Type", "application/json")
         .withBody("{\"test\": \"NO\", \"validDate\": \"" + date + "\", \"count\": 100}")));
 
-    List<Object> data = new Client("http://localhost:8089").fetchAndProcessData(LocalDateTime.now());
+    List<Object> data = new Client("http://localhost:8089").fetchAndProcessData(LocalDateTime.now().toString());
 
     assertThat(data, hasSize(2));
     assertThat(data.get(0), is(1));
