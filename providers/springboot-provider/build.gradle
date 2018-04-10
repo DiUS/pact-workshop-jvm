@@ -3,18 +3,19 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.4.RELEASE")
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.1.RELEASE")
   }
 }
 
 plugins {
-  id "au.com.dius.pact" version "3.4.0"
+  id "au.com.dius.pact" version "3.5.14"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 
 import com.wiredforcode.gradle.spawn.*
 
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
 dependencies {
   compile("org.springframework.boot:spring-boot-starter-web") {
@@ -22,6 +23,10 @@ dependencies {
   }
   compile("org.springframework.boot:spring-boot-starter-jetty")
   compile("org.springframework.boot:spring-boot-starter-actuator")
+}
+
+springBoot {
+  mainClassName = 'au.com.dius.pactworkshop.springbootprovider.MainApplication'
 }
 
 task startProvider(type: SpawnProcessTask, dependsOn: 'assemble') {
@@ -35,7 +40,7 @@ task stopProvider(type: KillProcessTask) {
 
 pact {
   serviceProviders {
-    'Our Provider' {
+    'Our_Provider' {
       port = 8080
 
       startProviderTask = startProvider
