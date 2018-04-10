@@ -611,3 +611,14 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 BUILD FAILED in 5s
 2 actionable tasks: 1 executed, 1 up-to-date
 ```
+
+We need to **publish** the consumer pact file to the provider projects again. Then, running the provider verification
+tests we get the expected failure about the date format.
+
+```
+Failures:
+
+0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
+      $.validDate -> Expected '2018-04-10T14:49:57.675' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2018-04-10T14:49:57.675
+
+```
