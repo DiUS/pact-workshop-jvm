@@ -11,10 +11,8 @@ subprojects {
   dependencies {
     compile 'org.slf4j:slf4j-api:1.7.22'
 
-    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
-      exclude group: 'org.codehaus.groovy'
-    }
-    testCompile 'cglib:cglib-nodep:3.2.4',
-      'org.objenesis:objenesis:2.4'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.18.0'
+    testCompile 'org.hamcrest:hamcrest-integration:1.3'
   }
 }

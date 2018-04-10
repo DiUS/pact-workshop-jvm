@@ -118,33 +118,31 @@ Now lets get the client to use the data it gets back from the provider. Here is 
 
 Let's now test our updated client.
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientSpec.groovy:*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientTest.java:*
 
-```groovy
-class ClientSpec extends Specification {
+```java
+public class ClientTest {
 
-  private Client client
-  private RESTClient mockHttp
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(8080);
 
-  def setup() {
-    mockHttp = Mock(RESTClient)
-    client = new Client(http: mockHttp)
-  }
+  @Test
+  public void canProcessTheJsonPayloadFromTheProvider() throws UnirestException {
 
-  def 'can process the json payload from the provider'() {
-    given:
-    def json = [
-      test: 'NO',
-      date: '2013-08-16T15:31:20+10:00',
-      count: 100
-    ]
+    String date = "2013-08-16T15:31:20+10:00";
 
-    when:
-    def result = client.fetchAndProcessData()
+    stubFor(get(urlPathEqualTo("/provider.json"))
+      .withQueryParam("validDate", matching(".+"))
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withHeader("Content-Type", "application/json")
+        .withBody("{\"test\": \"NO\", \"date\": \"" + date + "\", \"count\": 100}")));
 
-    then:
-    1 * mockHttp.get(_) >> [data: json, success: true]
-    result == [1, ZonedDateTime.parse(json.date)]
+    List<Object> data = new Client().fetchAndProcessData();
+
+    assertThat(data, hasSize(2));
+    assertThat(data.get(0), is(1));
+    assertThat(data.get(1), is(ZonedDateTime.parse(date)));
   }
 
 }
@@ -157,8 +155,8 @@ Let's run this spec and see it all pass:
 ```console
 $ ./gradlew :consumer:check
 
-BUILD SUCCESSFUL in 3s
-3 actionable tasks: 3 executed
+BUILD SUCCESSFUL in 0s
+3 actionable tasks: 3 up-to-date
 ```
 
 However, there is a problem with this integration point. Running the actual client against any of the providers results in
@@ -166,41 +164,14 @@ However, there is a problem with this integration point. Running the actual clie
 
 ```console
 $ ./gradlew :consumer:run
-Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
 
 > Task :consumer:run FAILED
-data=[test:NO, validDate:2018-04-05T16:40:40.295, count:1000]
-Exception in thread "main" java.lang.NullPointerException: text
-        at java.util.Objects.requireNonNull(Objects.java:228)
-        at java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1848)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:597)
-        at java.time.ZonedDateTime.parse(ZonedDateTime.java:582)
-        at java_time_ZonedDateTime$parse.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)
-        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.groovy:26)
-        at au.com.dius.pactworkshop.consumer.Client$fetchAndProcessData.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:117)
-        at au.com.dius.pactworkshop.consumer.Consumer.run(Consumer.groovy:3)
-        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.lang.reflect.Method.invoke(Method.java:498)
-        at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:93)
-        at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1213)
-        at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1022)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:925)
-        at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:908)
-        at org.codehaus.groovy.runtime.InvokerHelper.runScript(InvokerHelper.java:412)
-        at org.codehaus.groovy.runtime.InvokerHelper$runScript.call(Unknown Source)
-        at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:48)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:113)
-        at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:133)
-        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.groovy)
+data={"test":"NO","validDate":"2018-04-10T11:48:36.838","count":1000}
+Exception in thread "main" org.json.JSONException: JSONObject["date"] not found.
+        at org.json.JSONObject.get(JSONObject.java:471)
+        at org.json.JSONObject.getString(JSONObject.java:717)
+        at au.com.dius.pactworkshop.consumer.Client.fetchAndProcessData(Client.java:26)
+        at au.com.dius.pactworkshop.consumer.Consumer.main(Consumer.java:7)
 
 
 FAILURE: Build failed with an exception.
@@ -214,9 +185,9 @@ Run with --stacktrace option to get the stack trace. Run with --info or --debug 
 
 * Get more help at https://help.gradle.org
 
-BUILD FAILED in 7s
+BUILD FAILED in 1s
 2 actionable tasks: 1 executed, 1 up-to-date
 ```
 
-The provider returns a `validDate` while the consumer is
-trying to use `date`, which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
+The provider returns a `validDate` while the consumer is trying to use `date`, which will blow up when run for
+real even with the tests all passing. Here is where Pact comes in.

@@ -4,4 +4,6 @@ mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
 
 dependencies {
   compile 'com.mashape.unirest:unirest-java:1.4.9'
+
+  testCompile "com.github.tomakehurst:wiremock:2.16.0"
 }
