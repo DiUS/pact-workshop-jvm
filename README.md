@@ -453,27 +453,28 @@ field. Also, the date formats are different.
 
 ## Step 5 - Verify the provider with a test
 
-In this step we will verify the same pact file against the Dropwizard provider using a JUnit test. First we copy it over,
-or 'publish' it to our provider project.
+In this step we will verify the same pact file against the Dropwizard provider using a JUnit test. If you need to, 
+re-run the `publishWorkshopPact` to get the pact file in the provider project.
 
 We add the pact provider junit jar and the dropwizard testing jar to our project dependencies, and then we can create a
 simple test to verify our provider.
 
-```groovy
-@RunWith(PactRunner)
-@Provider('Our Provider')
-@PactFolder('build/pacts')
-class PactVerificationTest {
-
+```java
+@RunWith(PactRunner.class)
+@Provider("Our Provider")
+@PactFolder("build/pacts")
+public class PactVerificationTest {
   @ClassRule
-  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication,
-    ResourceHelpers.resourceFilePath("main-app-config.yaml"))
+  public static final DropwizardAppRule<ServiceConfig> RULE = new DropwizardAppRule<ServiceConfig>(MainApplication.class,
+    ResourceHelpers.resourceFilePath("main-app-config.yaml"));
 
   @TestTarget
-  public final Target target = new HttpTarget(8080)
+  public final Target target = new HttpTarget(8080);
 
   @State("data count > 0")
-  void dataCountGreaterThanZero() { }
+  public void dataCountGreaterThanZero() {
+
+  }
 }
 ```
 
@@ -484,21 +485,15 @@ Running this test will fail for the same reasons as in step 4.
 
 ```console
 $ ./gradlew :providers:dropwizard-provider:test
-:providers:dropwizard-provider:compileJava UP-TO-DATE
-:providers:dropwizard-provider:compileGroovy UP-TO-DATE
-:providers:dropwizard-provider:processResources UP-TO-DATE
-:providers:dropwizard-provider:classes UP-TO-DATE
-:providers:dropwizard-provider:compileTestJava UP-TO-DATE
-:providers:dropwizard-provider:compileTestGroovy
-:providers:dropwizard-provider:processTestResources UP-TO-DATE
-:providers:dropwizard-provider:testClasses
-:providers:dropwizard-provider:test
+Starting a Gradle Daemon, 1 incompatible and 2 stopped Daemons could not be reused, use --status for details
+
+> Task :providers:dropwizard-provider:test 
 
 au.com.dius.pactworkshop.dropwizardprovider.PactVerificationTest > Our Little Consumer - a request for json data FAILED
     java.lang.AssertionError
 
 1 test completed, 1 failed
-:providers:dropwizard-provider:test FAILED
+
 
 FAILURE: Build failed with an exception.
 
@@ -507,9 +502,12 @@ Execution failed for task ':providers:dropwizard-provider:test'.
 > There were failing tests. See the report at: file:///home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/dropwizard-provider/build/reports/tests/test/index.html
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
-BUILD FAILED
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 12s
+4 actionable tasks: 4 executed
 ```
 
 The JUnit build report has the expected failures (standard output shown here).
@@ -527,16 +525,17 @@ Verifying a pact between Our Little Consumer and Our Provider
 Failures:
 
 0) a request for json data returns a response which has a matching body
-      $.body -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
 
         Diff:
 
             "test": "NO",
         -    "date": "2013-08-16T15:31:20+10:00",
         -    "count": 100
-        +    "validDate": "2017-01-27T16:53:32.291",
-        +    "count": 1000
+        +    "count": 1000,
+        +    "validDate": "2018-04-10T14:15:04.902"
         }
 
-      $.body.count -> Expected 100 but received 1000
+      $.count -> Expected 100 but received 1000
+
 ```
