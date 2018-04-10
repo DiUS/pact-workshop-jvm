@@ -1231,6 +1231,8 @@ Now, we can run `./gradlew consumer:pactPublish` after running the consumer test
 published to the broker. Afterwards, you can navigate to the Pact Broker URL and see the published pact against
 the consumer and provider names setup in our consumer test.
 
+![Our Pact Is Published](diagrams/published.png)
+
 ### Dropwizard provider
 
 In the `PactVerificationTest` we can change the source we fetch pacts from by using a `@PactBroker` annotation instead
@@ -1297,3 +1299,5 @@ pact {
 
 Running either of the verification tests will now publish the result back to the broker. If you refresh the index page in the broker,
 you will see the pacts marked as verified.
+
+![Our Pact Is Verified](diagrams/verified.png)

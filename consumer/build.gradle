@@ -6,7 +6,7 @@ apply plugin: 'application'
 apply plugin: 'groovy'
 
 mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
-version = 0
+version = 2
 
 dependencies {
   compile 'com.mashape.unirest:unirest-java:1.4.9'
