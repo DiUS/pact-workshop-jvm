@@ -1208,21 +1208,14 @@ use a Pact Broker to do this instead.
 
 ### Consumer
 
-First, in the consumer project we need to tell the Gradle Pact plugin about our broker.
+First, in the consumer project we need to add the Gradle Pact plugin and tell it about our broker.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.4.0"
+  id "au.com.dius.pact" version "3.5.14"
 }
 
-apply plugin: 'application'
-
-mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
-version = 0
-
-dependencies {
-  compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
-}
+... omitted ...
 
 pact {
   publish {
