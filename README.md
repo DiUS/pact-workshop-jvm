@@ -876,36 +876,36 @@ Let's fix our providers so they generate the correct responses for the query par
 The Dropwizard root resource gets updated to check if the parameter has been passed, and handle the date parse exception
 if it is invalid. Two new exceptions get thrown for these cases.
 
-```groovy
+```java
   @GET
-  Map providerJson(@QueryParam("validDate") Optional<String> validDate) {
-    if (validDate.present) {
+  public Map<String, Serializable> providerJson(@QueryParam("validDate") Optional<String> validDate) {
+    if (validDate.isPresent()) {
       try {
-        def valid_time = LocalDateTime.parse(validDate.get())
-        [
-          test: 'NO',
-          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-          count: 1000
-        ]
-      } catch (e) {
-        throw new InvalidQueryParameterException("'${validDate.get()}' is not a date", e)
+        LocalDateTime validTime = LocalDateTime.parse(validDate.get());
+        Map<String, Serializable> result = new HashMap<>(3);
+        result.put("test", "NO");
+        result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+        result.put("count", 1000);
+        return result;
+      } catch (DateTimeParseException e) {
+        throw new InvalidQueryParameterException("'" + validDate.get() + "' is not a date", e);
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 Next step is to create exception mappers for the new exceptions, and register them with the Dropwizard environment.
 
-```groovy
-class InvalidQueryParameterExceptionMapper implements ExceptionMapper<InvalidQueryParameterException> {
+```java
+public class InvalidQueryParameterExceptionMapper implements ExceptionMapper<InvalidQueryParameterException> {
   @Override
-  Response toResponse(InvalidQueryParameterException exception) {
-    Response.status(Response.Status.BAD_REQUEST)
+  public Response toResponse(InvalidQueryParameterException exception) {
+    return Response.status(Response.Status.BAD_REQUEST)
       .type(MediaType.APPLICATION_JSON_TYPE)
-      .entity(JsonOutput.toJson(exception.message))
-      .build()
+      .entity("{\"error\": \"" + exception.getMessage() + "\"}")
+      .build();
   }
 }
 ```
