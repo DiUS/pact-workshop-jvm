@@ -19,7 +19,7 @@ class ClientPactSpec extends Specification {
     date = LocalDateTime.now()
     provider = new PactBuilder()
     provider {
-      serviceConsumer 'Our Little Consumer'
+      serviceConsumer 'Our Consumer'
       hasPactWith 'Our Provider'
       port 1234
     }
@@ -61,7 +61,7 @@ class ClientPactSpec extends Specification {
       given('data count > 0')
       uponReceiving('a request with a missing date parameter')
       withAttributes(path: '/provider.json')
-      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
+      willRespondWith(status: 400, body: '{"error": "validDate is required"}', headers: ['Content-Type': 'application/json'])
     }
 
     when:
@@ -79,7 +79,7 @@ class ClientPactSpec extends Specification {
       given('data count > 0')
       uponReceiving('a request with an invalid date parameter')
       withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
-      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
+      willRespondWith(status: 400, body: $/{"error": "'This is not a date' is not a date"}/$, headers: ['Content-Type': 'application/json'])
     }
 
     when:
