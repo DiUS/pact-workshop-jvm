@@ -52,20 +52,20 @@ public class RootResource {
 
 The springboot provider controller is similar
 
-*providers/springboot-provider/src/main/groovy/au/com/dius/pactworkshop/springbootprovider/RootController.groovy:*
+*providers/springboot-provider/src/main/java/au/com/dius/pactworkshop/springbootprovider/RootController.java:*
 
-```groovy
+```java
 @RestController
-class RootController {
+public class RootController {
 
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    def validTime = LocalDateTime.parse(validDate)
-    [
-      test: 'NO',
-      validDate: LocalDateTime.now().toString(),
-      count: 1000
-    ]
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    LocalDateTime validTime = LocalDateTime.parse(validDate);
+    Map<String, Serializable> map = new HashMap<>(3);
+    map.put("test", "NO");
+    map.put("validDate", LocalDateTime.now().toString());
+    map.put("count", 1000);
+    return map;
   }
 
 }
