@@ -1,6 +1,6 @@
 
 subprojects {
-  apply plugin: 'groovy'
+  apply plugin: 'java'
 
   repositories {
     mavenLocal()
@@ -10,24 +10,11 @@ subprojects {
 
   dependencies {
     compile 'org.slf4j:slf4j-api:1.7.22'
-    compile 'org.codehaus.groovy:groovy-all:2.4.11:indy'
-    compile 'ch.qos.logback:logback-core:1.1.7',
-      'ch.qos.logback:logback-classic:1.1.7'
+    compile 'org.apache.commons:commons-lang3:3.7'
 
-    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
-      exclude group: 'org.codehaus.groovy'
-    }
-    testCompile 'cglib:cglib-nodep:3.2.4',
-      'org.objenesis:objenesis:2.4'
-    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.11:3.4.0'
-  }
-
-  test {
-    systemProperties['pact.rootDir'] = "$buildDir/pacts"
-  }
-
-  tasks.withType(GroovyCompile) {
-    groovyOptions.optimizationOptions.indy = true
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.18.0'
+    testCompile 'org.hamcrest:hamcrest-integration:1.3'
   }
 }
 
