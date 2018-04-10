@@ -3,5 +3,7 @@ apply plugin: 'application'
 mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
 
 dependencies {
-  compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+  compile 'com.mashape.unirest:unirest-java:1.4.9'
+
+  testCompile "com.github.tomakehurst:wiremock:2.16.0"
 }

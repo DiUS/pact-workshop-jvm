@@ -1,6 +1,6 @@
 
 subprojects {
-  apply plugin: 'groovy'
+  apply plugin: 'java'
 
   repositories {
     mavenLocal()
@@ -10,16 +10,13 @@ subprojects {
 
   dependencies {
     compile 'org.slf4j:slf4j-api:1.7.22'
-    compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile 'ch.qos.logback:logback-core:1.1.7',
       'ch.qos.logback:logback-classic:1.1.7'
 
-    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
-      exclude group: 'org.codehaus.groovy'
-    }
-    testCompile 'cglib:cglib-nodep:3.2.4',
-      'org.objenesis:objenesis:2.4'
-    testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.12:3.5.14'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.18.0'
+    testCompile 'org.hamcrest:hamcrest-integration:1.3'
+    testCompile 'au.com.dius:pact-jvm-consumer-unit_2.12:3.5.14'
   }
 
   test {
