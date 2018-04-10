@@ -19,8 +19,8 @@ class ClientPactSpec extends Specification {
     date = LocalDateTime.now()
     provider = new PactBuilder()
     provider {
-      serviceConsumer 'Reese Consumer'
-      hasPactWith 'Reese Provider'
+      serviceConsumer 'Our Consumer'
+      hasPactWith 'Our Provider'
       port 1234
     }
   }
