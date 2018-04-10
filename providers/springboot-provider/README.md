@@ -12,4 +12,4 @@ To run code quality checks: `./gradlew check` (this will also run tests).
 
 ## To Run It
 
-You can run the service with `./gradlew :providers:dropwizard-provider:bootRun`
+You can run the service with `./gradlew :providers:springboot-provider:bootRun`
