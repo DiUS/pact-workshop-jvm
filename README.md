@@ -926,38 +926,38 @@ Now running the `PactVerificationTest` will pass.
 
 The Springboot root controller gets updated in a similar way to the Dropwizard resource.
 
-```groovy
+```java
   @RequestMapping("/provider.json")
-  Map providerJson(@RequestParam(required = false) String validDate) {
-    if (validDate) {
+  public Map<String, Serializable> providerJson(@RequestParam(required = false) String validDate) {
+    if (StringUtils.isNotEmpty(validDate)) {
       try {
-        def valid_time = LocalDateTime.parse(validDate)
-        [
-          test: 'NO',
-          validDate: OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")),
-          count: 1000
-        ]
-      } catch (e) {
-        throw new InvalidQueryParameterException("'$validDate' is not a date", e)
+        LocalDateTime validTime = LocalDateTime.parse(validDate);
+        Map<String, Serializable> map = new HashMap<>(3);
+        map.put("test", "NO");
+        map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+        map.put("count", 1000);
+        return map;
+      } catch (DateTimeParseException e) {
+        throw new InvalidQueryParameterException("'" + validDate + "' is not a date", e);
       }
     } else {
-      throw new QueryParameterRequiredException('validDate is required')
+      throw new QueryParameterRequiredException("validDate is required");
     }
   }
 ```
 
 Then, to get the exceptions mapped to the correct response, we need to create a controller advice.
 
-```groovy
-@ControllerAdvice(basePackageClasses = RootController)
-class RootControllerAdvice extends ResponseEntityExceptionHandler {
-
-  @ExceptionHandler([InvalidQueryParameterException, QueryParameterRequiredException])
+```java
+@ControllerAdvice(basePackageClasses = RootController.class)
+public class RootControllerAdvice extends ResponseEntityExceptionHandler {
+  @ExceptionHandler({InvalidQueryParameterException.class, QueryParameterRequiredException.class})
   @ResponseBody
-  ResponseEntity handleControllerException(HttpServletRequest request, Throwable ex) {
-    new ResponseEntity(JsonOutput.toJson(ex.message), HttpStatus.BAD_REQUEST)
+  public ResponseEntity<String> handleControllerException(HttpServletRequest request, Throwable ex) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>("{\"error\": \"" + ex.getMessage() + "\"}", headers, HttpStatus.BAD_REQUEST);
   }
-
 }
 ```
 

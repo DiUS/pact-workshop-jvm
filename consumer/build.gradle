@@ -7,7 +7,6 @@ dependencies {
   compile 'com.mashape.unirest:unirest-java:1.4.9'
   compile 'ch.qos.logback:logback-core:1.1.7',
     'ch.qos.logback:logback-classic:1.1.7'
-  compile 'org.apache.commons:commons-lang3:3.7'
 
   testCompile "com.github.tomakehurst:wiremock:2.16.0"
   testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.12:3.5.14'
