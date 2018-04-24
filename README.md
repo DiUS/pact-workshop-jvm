@@ -86,12 +86,6 @@ $ ./gradlew :providers:dropwizard-provider:run
 Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
-$ ./gradlew :providers:dropwizard-provider:run
-```
-
-Once the provider has successfully initialized, open another terminal session and run the consumer:
-
-```console
 
 $ ./gradlew :consumer:run
 
@@ -103,8 +97,6 @@ BUILD SUCCESSFUL in 1s
 2 actionable tasks: 2 executed
 
 ```
-
-Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
 
