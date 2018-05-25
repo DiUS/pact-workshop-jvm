@@ -100,8 +100,6 @@ BUILD SUCCESSFUL in 1s
 
 Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
 
-Don't forget to stop the dropwizard-provider that is running in the first terminal when you have finished this step.
-
 ## Step 2 - Client Tested but integration fails
 
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
