@@ -29,7 +29,7 @@ public class ClientTest {
   @Test
   public void canProcessTheJsonPayloadFromTheProvider() throws UnirestException {
 
-    String date = "2013-08-16T15:31:20+10:00";
+    String date = "2013-08-16T15:31:20+1000";
 
     stubFor(get(urlPathEqualTo("/provider.json"))
       .withQueryParam("validDate", matching(".+"))
@@ -42,7 +42,7 @@ public class ClientTest {
 
     assertThat(data, hasSize(2));
     assertThat(data.get(0), is(1));
-    assertThat(data.get(1), is(equalTo(OffsetDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")))));
+    assertThat(data.get(1), is(equalTo(OffsetDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")))));
   }
 
 }
