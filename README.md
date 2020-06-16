@@ -527,32 +527,24 @@ BUILD FAILED in 12s
 4 actionable tasks: 4 executed
 ```
 
-The JUnit build report has the expected failures (standard output shown here).
+The JUnit build report has the expected failures.
 
 ```
-Verifying a pact between Our Little Consumer and Our Provider
-  Given data count > 0
-  a request for json data
-    returns a response which
-      has status code 200 (OK)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
-      has a matching body (FAILED)
-
+java.lang.AssertionError: 
 Failures:
 
-0) a request for json data returns a response which has a matching body
-      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+1) a request for json data
 
-        Diff:
+    1.1) BodyMismatch: $ BodyMismatch: Expected date='2013-08-16T15:31:20+10:00' but was missing
 
-            "test": "NO",
-        -    "date": "2013-08-16T15:31:20+10:00",
-        -    "count": 100
-        +    "count": 1000,
-        +    "validDate": "2018-04-10T14:15:04.902"
+        {
+        -  "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+        -  "count": 100
+        +  "count": 1000,
+        +  "validDate": "2020-06-16T12:29:52.836"
         }
 
-      $.count -> Expected 100 but received 1000
 
+    1.2) BodyMismatch: $.count BodyMismatch: Expected 100 (Integer) but received 1000 (Integer)
 ```
