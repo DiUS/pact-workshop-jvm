@@ -622,7 +622,8 @@ tests we get the expected failure about the date format.
 ```
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.validDate -> Expected '2018-04-10T14:49:57.675' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2018-04-10T14:49:57.675
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0
+
+    1.1) BodyMismatch: $.validDate BodyMismatch: Expected "2020-06-16T13:01:21.675150" to match a datetime of 'yyyy-MM-dd'T'HH:mm:ssXX': Text '2020-06-16T13:01:21.675150' could not be parsed at index 19
 
 ```
