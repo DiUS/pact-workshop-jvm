@@ -363,7 +363,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.5.14"
+  id "au.com.dius.pact" version "4.1.2"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -425,25 +425,27 @@ Verifying a pact between Our Little Consumer and Our_Provider
   a request for json data
     returns a response which
       has status code 200 (OK)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
       has a matching body (FAILED)
+
+NOTE: Skipping publishing of verification results as it has been disabled (pact.verifier.publishResults is not 'true')
+
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0
 
-        Diff:
+    1.1) BodyMismatch: $ BodyMismatch: Expected date='2013-08-16T15:31:20+10:00' but was missing
 
-            "test": "NO",
-        -    "date": "2013-08-16T15:31:20+10:00",
-        -    "count": 100
-        +    "count": 1000,
-        +    "validDate": "2018-04-10T13:55:20.318"
+        {
+        -  "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+        -  "count": 100
+        +  "count": 1000,
+        +  "validDate": "2020-06-16T12:08:04.314696"
         }
 
-      $.count -> Expected 100 but received 1000
+
+    1.2) BodyMismatch: $.count BodyMismatch: Expected 100 (Integer) but received 1000 (Integer)
 
 
 
@@ -451,14 +453,14 @@ Failures:
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-There were 1 pact failures for provider Our_Provider
+There were 2 non-pending pact failures for provider Our_Provider
 
 * Try:
 Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
 * Get more help at https://help.gradle.org
 
-BUILD FAILED in 7s
+BUILD FAILED in 6s
 5 actionable tasks: 5 executed
 ```
 
