@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-  id "au.com.dius.pact" version "3.5.14"
+  id "au.com.dius.pact" version "4.1.2"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 
@@ -48,7 +48,7 @@ pact {
       stateChangeUrl = url('http://localhost:8080/pactStateChange')
 
       hasPactWith('Our Little Consumer') {
-        pactFile = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
+        pactSource = file("$buildDir/pacts/Our Little Consumer-Our Provider.json")
       }
     }
   }
