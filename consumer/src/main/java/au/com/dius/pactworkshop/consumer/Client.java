@@ -7,7 +7,9 @@ import org.json.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,11 +33,11 @@ public class Client {
 
     JSONObject jsonObject = data.getObject();
     int value = 100 / jsonObject.getInt("count");
-    OffsetDateTime date = OffsetDateTime.parse(jsonObject.getString("validDate"),
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+    TemporalAccessor date = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")
+            .parse(jsonObject.getString("validDate"));
 
     System.out.println("value=" + value);
     System.out.println("date=" + date);
-    return Arrays.asList(value, date);
+    return Arrays.asList(value, OffsetDateTime.from(date));
   }
 }
