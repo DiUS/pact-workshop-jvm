@@ -1,5 +1,5 @@
 plugins {
-  id "au.com.dius.pact" version "3.5.14"
+  id "au.com.dius.pact" version "3.6.14"
 }
 
 apply plugin: 'application'
