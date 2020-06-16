@@ -832,7 +832,7 @@ Verifying a pact between Our Little Consumer and Our_Provider
          WARNING: State Change ignored as there is no stateChange URL
   a request with a missing date parameter
     returns a response which
-      has status code 404 (FAILED)
+      has status code 400 (FAILED)
       has a matching body (FAILED)
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
@@ -848,7 +848,7 @@ Failures:
 
 1) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0
 
-    1.1) StatusMismatch: expected status of 404 but was 500
+    1.1) StatusMismatch: expected status of 400 but was 500
 
     1.2) BodyMismatch: $.error BodyMismatch: Expected 'validDate is required' (String) but received 'Internal Server Error' (String)
 
