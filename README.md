@@ -663,44 +663,70 @@ be able to pass invalid dates in, and if the date parameter is null, don't inclu
 
 Here are the two additional tests:
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy:*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientPactTest.java:*
 
-```groovy
-  def 'handles a missing date parameter'() {
-    given:
-    provider {
-      given('data count > 0')
-      uponReceiving('a request with a missing date parameter')
-      withAttributes(path: '/provider.json')
-      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
-    }
-
-    when:
-    PactVerificationResult pactResult = provider.runTest {
-      client.fetchAndProcessData(null)
-    }
-
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
+```java
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pactForMissingDateParameter(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    return builder
+            .given("data count > 0")
+            .uponReceiving("a request with a missing date parameter")
+            .path("/provider.json")
+            .method("GET")
+            .willRespondWith()
+            .status(404)
+            .body(
+                new PactDslJsonBody().stringValue("error", "validDate is required")
+            )
+            .toPact();
   }
 
-  def 'handles an invalid date parameter'() {
-    given:
-    provider {
-      given('data count > 0')
-      uponReceiving('a request with an invalid date parameter')
-      withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
-      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
-    }
+  @Test
+  @PactVerification(value = "Our Provider", fragment = "pactForMissingDateParameter")
+  public void handlesAMissingDateParameter() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
 
-    when:
-    def result
-    PactVerificationResult pactResult = provider.runTest {
-      result = client.fetchAndProcessData('This is not a date')
-    }
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData(null);
 
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(0));
+    assertThat(result.get(1), nullValue());
+  }
+
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pactForInvalidDateParameter(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    return builder
+            .given("data count > 0")
+            .uponReceiving("a request with an invalid date parameter")
+            .path("/provider.json")
+            .method("GET")
+            .query("validDate=This is not a date")
+            .willRespondWith()
+            .status(400)
+            .body(
+                 new PactDslJsonBody().stringValue("error", "'This is not a date' is not a date")
+            )
+            .toPact();
+  }
+
+  @Test
+  @PactVerification(value = "Our Provider", fragment = "pactForInvalidDateParameter")
+  public void handlesAInvalidDateParameter() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
+
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData("This is not a date");
+
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(0));
+    assertThat(result.get(1), nullValue());
   }
 ```
 
@@ -711,51 +737,77 @@ After running our specs, the pact file will have 2 new interactions.
 ```json
 [
   {
-      "description": "a request with a missing date parameter",
-      "request": {
-          "method": "GET",
-          "path": "/provider.json"
+    "description": "a request with a missing date parameter",
+    "request": {
+      "method": "GET",
+      "path": "/provider.json"
+    },
+    "response": {
+      "status": 404,
+      "headers": {
+        "Content-Type": "application/json; charset=UTF-8"
       },
-      "response": {
-          "status": 400,
-          "headers": {
-              "Content-Type": "application/json"
-          },
-          "body": {
-              "error": "validDate is required"
-          }
+      "body": {
+        "error": "validDate is required"
       },
-      "providerStates": [
-          {
-              "name": "data count > 0"
+      "matchingRules": {
+        "header": {
+          "Content-Type": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+              }
+            ],
+            "combine": "AND"
           }
-      ]
+        }
+      }
+    },
+    "providerStates": [
+      {
+        "name": "data count > 0"
+      }
+    ]
   },
   {
-      "description": "a request with an invalid date parameter",
-      "request": {
-          "method": "GET",
-          "path": "/provider.json",
-          "query": {
-              "validDate": [
-                  "This is not a date"
-              ]
-          }
+    "description": "a request with an invalid date parameter",
+    "request": {
+      "method": "GET",
+      "path": "/provider.json",
+      "query": {
+        "validDate": [
+          "This is not a date"
+        ]
+      }
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": "application/json; charset=UTF-8"
       },
-      "response": {
-          "status": 400,
-          "headers": {
-              "Content-Type": "application/json"
-          },
-          "body": {
-              "error": "'This is not a date' is not a date"
-          }
+      "body": {
+        "error": "'This is not a date' is not a date"
       },
-      "providerStates": [
-          {
-              "name": "data count > 0"
+      "matchingRules": {
+        "header": {
+          "Content-Type": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+              }
+            ],
+            "combine": "AND"
           }
-      ]
+        }
+      }
+    },
+    "providerStates": [
+      {
+        "name": "data count > 0"
+      }
+    ]
   }
 ]
 ```
