@@ -5,19 +5,10 @@ mainClassName = 'au.com.dius.pactworkshop.consumer.Consumer'
 
 dependencies {
   compile 'com.mashape.unirest:unirest-java:1.4.9'
-  compile 'ch.qos.logback:logback-core:1.1.7',
-    'ch.qos.logback:logback-classic:1.1.7'
+  compile 'ch.qos.logback:logback-core:1.2.3'
+  compile 'ch.qos.logback:logback-classic:1.2.3'
   compile 'org.apache.commons:commons-lang3:3.7'
 
-  testCompile "com.github.tomakehurst:wiremock:2.16.0"
-  testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.12:3.5.14'
-  testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
-    exclude group: 'org.codehaus.groovy'
-  }
-  testCompile 'cglib:cglib-nodep:3.2.4',
-    'org.objenesis:objenesis:2.4'
-}
-
-test {
-  systemProperties['pact.rootDir'] = "$buildDir/pacts"
+  testCompile 'com.github.tomakehurst:wiremock:2.16.0'
+  testCompile 'au.com.dius.pact.consumer:junit:4.1.2'
 }

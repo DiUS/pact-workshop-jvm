@@ -199,51 +199,53 @@ real even with the tests all passing. Here is where Pact comes in.
 
 Let us add Pact to the project and write a consumer pact test.
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientPactTest.java*
 
-```groovy
-class ClientPactSpec extends Specification {
+```java
+public class ClientPactTest {
 
-  private Client client
-  private LocalDateTime date
-  private PactBuilder provider
+  // This sets up a mock server that pretends to be our provider
+  @Rule
+  public PactProviderRule provider = new PactProviderRule("Our Provider", "localhost", 1234, this);
 
-  def setup() {
-    client = new Client('http://localhost:1234')
-    date = LocalDateTime.now()
-    provider = new PactBuilder()
-    provider {
-      serviceConsumer 'Our Little Consumer'
-      hasPactWith 'Our Provider'
-      port 1234
-    }
+  private LocalDateTime dateTime;
+  private String dateResult;
+
+  // This defines the expected interaction for out test
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pact(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = "2013-08-16T15:31:20+10:00";
+    return builder
+      .given("data count > 0")
+      .uponReceiving("a request for json data")
+      .path("/provider.json")
+      .method("GET")
+      .query("validDate=" + dateTime.toString())
+      .willRespondWith()
+      .status(200)
+      .body(
+          new PactDslJsonBody()
+              .stringValue("test", "NO")
+              .stringValue("date", dateResult)
+              .numberValue("count", 100)
+      )
+      .toPact();
   }
 
-  def 'Pact with our provider'() {
-    given:
-    def json = [
-      test: 'NO',
-      date: '2013-08-16T15:31:20+10:00',
-      count: 100
-    ]
-    provider {
-      given('data count > 0')
-      uponReceiving('a request for json data')
-      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
-      willRespondWith(status: 200, body: JsonOutput.toJson(json), headers: ['Content-Type': 'application/json'])
-    }
+  @Test
+  @PactVerification("Our Provider")
+  public void pactWithOurProvider() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
 
-    when:
-    def result
-    PactVerificationResult pactResult = provider.runTest {
-      result = client.fetchAndProcessData(date)
-    }
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData(dateTime);
 
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
-    result == [1, ZonedDateTime.parse(json.date)]
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(1));
+    assertThat(result.get(1), is(ZonedDateTime.parse(dateResult)));
   }
-
 }
 ```
 
@@ -269,50 +271,63 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
 
 ```json
 {
-    "provider": {
-        "name": "Our Provider"
-    },
-    "consumer": {
-        "name": "Our Little Consumer"
-    },
-    "interactions": [
-        {
-            "description": "a request for json data",
-            "request": {
-                "method": "GET",
-                "path": "/provider.json",
-                "query": {
-                    "validDate": [
-                        "2018-04-10T12:34:28.839"
-                    ]
-                }
-            },
-            "response": {
-                "status": 200,
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": {
-                    "test": "NO",
-                    "date": "2013-08-16T15:31:20+10:00",
-                    "count": 100
-                }
-            },
-            "providerStates": [
-                {
-                    "name": "data count > 0"
-                }
-            ]
+  "provider": {
+    "name": "Our Provider"
+  },
+  "consumer": {
+    "name": "Our Little Consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request for json data",
+      "request": {
+        "method": "GET",
+        "path": "/provider.json",
+        "query": {
+          "validDate": [
+            "2020-06-16T11:49:49.485"
+          ]
         }
-    ],
-    "metadata": {
-        "pact-specification": {
-            "version": "3.0.0"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=UTF-8"
         },
-        "pact-jvm": {
-            "version": "3.5.14"
+        "body": {
+          "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+          "count": 100
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
         }
+      },
+      "providerStates": [
+        {
+          "name": "data count > 0"
+        }
+      ]
     }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "4.1.2"
+    }
+  }
 }
 ```
 
@@ -348,7 +363,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "3.5.14"
+  id "au.com.dius.pact" version "4.1.2"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -410,25 +425,27 @@ Verifying a pact between Our Little Consumer and Our_Provider
   a request for json data
     returns a response which
       has status code 200 (OK)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
       has a matching body (FAILED)
+
+NOTE: Skipping publishing of verification results as it has been disabled (pact.verifier.publishResults is not 'true')
+
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0
 
-        Diff:
+    1.1) BodyMismatch: $ BodyMismatch: Expected date='2013-08-16T15:31:20+10:00' but was missing
 
-            "test": "NO",
-        -    "date": "2013-08-16T15:31:20+10:00",
-        -    "count": 100
-        +    "count": 1000,
-        +    "validDate": "2018-04-10T13:55:20.318"
+        {
+        -  "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+        -  "count": 100
+        +  "count": 1000,
+        +  "validDate": "2020-06-16T12:08:04.314696"
         }
 
-      $.count -> Expected 100 but received 1000
+
+    1.2) BodyMismatch: $.count BodyMismatch: Expected 100 (Integer) but received 1000 (Integer)
 
 
 
@@ -436,14 +453,14 @@ Failures:
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-There were 1 pact failures for provider Our_Provider
+There were 2 non-pending pact failures for provider Our_Provider
 
 * Try:
 Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
 
 * Get more help at https://help.gradle.org
 
-BUILD FAILED in 7s
+BUILD FAILED in 6s
 5 actionable tasks: 5 executed
 ```
 
@@ -510,34 +527,26 @@ BUILD FAILED in 12s
 4 actionable tasks: 4 executed
 ```
 
-The JUnit build report has the expected failures (standard output shown here).
+The JUnit build report has the expected failures.
 
 ```
-Verifying a pact between Our Little Consumer and Our Provider
-  Given data count > 0
-  a request for json data
-    returns a response which
-      has status code 200 (OK)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
-      has a matching body (FAILED)
-
+java.lang.AssertionError: 
 Failures:
 
-0) a request for json data returns a response which has a matching body
-      $ -> Expected date='2013-08-16T15:31:20+10:00' but was missing
+1) a request for json data
 
-        Diff:
+    1.1) BodyMismatch: $ BodyMismatch: Expected date='2013-08-16T15:31:20+10:00' but was missing
 
-            "test": "NO",
-        -    "date": "2013-08-16T15:31:20+10:00",
-        -    "count": 100
-        +    "count": 1000,
-        +    "validDate": "2018-04-10T14:15:04.902"
+        {
+        -  "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+        -  "count": 100
+        +  "count": 1000,
+        +  "validDate": "2020-06-16T12:29:52.836"
         }
 
-      $.count -> Expected 100 but received 1000
 
+    1.2) BodyMismatch: $.count BodyMismatch: Expected 100 (Integer) but received 1000 (Integer)
 ```
 
 ## Step 6 - Back to the client we go
@@ -546,20 +555,15 @@ Let's correct the consumer test to handle any integer for `count` and use the co
 to add a type matcher for `count` and change the field for the date to be `validDate`. We can also add a date expression
 to make sure the `validDate` field is a valid date. This is important because we are parsing it.
 
-The updated consumer test is now:
+The consumer test is now updated to:
 
-```groovy
-    provider {
-      given('data count > 0')
-      uponReceiving('a request for json data')
-      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
-      willRespondWith(status: 200)
-      withBody {
-        test 'NO'
-        validDate timestamp("yyyy-MM-dd'T'HH:mm:ssXXX", json.date)
-        count integer(json.count)
-      }
-    }
+```java
+          .body(
+              new PactDslJsonBody()
+                  .stringValue("test", "NO")
+                  .datetime("validDate", "yyyy-MM-dd'T'HH:mm:ssXX", dateResult.toInstant())
+                  .integerType("count", 100)
+          )
 ```
 
 Running this test will fail until we fix the client. Here is the correct client function:
@@ -571,12 +575,12 @@ Running this test will fail until we fix the client. Here is the correct client 
   
       JSONObject jsonObject = data.getObject();
       int value = 100 / jsonObject.getInt("count");
-      OffsetDateTime date = OffsetDateTime.parse(jsonObject.getString("validDate"),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+      TemporalAccessor date = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")
+              .parse(jsonObject.getString("validDate"));
   
       System.out.println("value=" + value);
       System.out.println("date=" + date);
-      return Arrays.asList(value, date);
+      return Arrays.asList(value, OffsetDateTime.from(date));
   }
 ```
 
@@ -618,8 +622,9 @@ tests we get the expected failure about the date format.
 ```
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our_Provider - a request for json dataVerifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0 returns a response which has a matching body
-      $.validDate -> Expected '2018-04-10T14:49:57.675' to match a timestamp of 'yyyy-MM-dd'T'HH:mm:ssXXX': Unable to parse the date: 2018-04-10T14:49:57.675
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request for json data Given data count > 0
+
+    1.1) BodyMismatch: $.validDate BodyMismatch: Expected "2020-06-16T13:01:21.675150" to match a datetime of 'yyyy-MM-dd'T'HH:mm:ssXX': Text '2020-06-16T13:01:21.675150' could not be parsed at index 19
 
 ```
 
@@ -636,7 +641,7 @@ public class RootController {
     LocalDateTime validTime = LocalDateTime.parse(validDate);
     Map<String, Serializable> map = new HashMap<>(3);
     map.put("test", "NO");
-    map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+    map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")));
     map.put("count", 1000);
     return map;
   }
@@ -658,44 +663,70 @@ be able to pass invalid dates in, and if the date parameter is null, don't inclu
 
 Here are the two additional tests:
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy:*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientPactTest.java:*
 
-```groovy
-  def 'handles a missing date parameter'() {
-    given:
-    provider {
-      given('data count > 0')
-      uponReceiving('a request with a missing date parameter')
-      withAttributes(path: '/provider.json')
-      willRespondWith(status: 400, body: '"validDate is required"', headers: ['Content-Type': 'application/json'])
-    }
-
-    when:
-    PactVerificationResult pactResult = provider.runTest {
-      client.fetchAndProcessData(null)
-    }
-
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
+```java
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pactForMissingDateParameter(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    return builder
+            .given("data count > 0")
+            .uponReceiving("a request with a missing date parameter")
+            .path("/provider.json")
+            .method("GET")
+            .willRespondWith()
+            .status(404)
+            .body(
+                new PactDslJsonBody().stringValue("error", "validDate is required")
+            )
+            .toPact();
   }
 
-  def 'handles an invalid date parameter'() {
-    given:
-    provider {
-      given('data count > 0')
-      uponReceiving('a request with an invalid date parameter')
-      withAttributes(path: '/provider.json', query: [validDate: 'This is not a date'])
-      willRespondWith(status: 400, body: $/"'This is not a date' is not a date"/$, headers: ['Content-Type': 'application/json'])
-    }
+  @Test
+  @PactVerification(value = "Our Provider", fragment = "pactForMissingDateParameter")
+  public void handlesAMissingDateParameter() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
 
-    when:
-    def result
-    PactVerificationResult pactResult = provider.runTest {
-      result = client.fetchAndProcessData('This is not a date')
-    }
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData(null);
 
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(0));
+    assertThat(result.get(1), nullValue());
+  }
+
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pactForInvalidDateParameter(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    return builder
+            .given("data count > 0")
+            .uponReceiving("a request with an invalid date parameter")
+            .path("/provider.json")
+            .method("GET")
+            .query("validDate=This is not a date")
+            .willRespondWith()
+            .status(400)
+            .body(
+                 new PactDslJsonBody().stringValue("error", "'This is not a date' is not a date")
+            )
+            .toPact();
+  }
+
+  @Test
+  @PactVerification(value = "Our Provider", fragment = "pactForInvalidDateParameter")
+  public void handlesAInvalidDateParameter() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
+
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData("This is not a date");
+
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(0));
+    assertThat(result.get(1), nullValue());
   }
 ```
 
@@ -706,51 +737,77 @@ After running our specs, the pact file will have 2 new interactions.
 ```json
 [
   {
-      "description": "a request with a missing date parameter",
-      "request": {
-          "method": "GET",
-          "path": "/provider.json"
+    "description": "a request with a missing date parameter",
+    "request": {
+      "method": "GET",
+      "path": "/provider.json"
+    },
+    "response": {
+      "status": 404,
+      "headers": {
+        "Content-Type": "application/json; charset=UTF-8"
       },
-      "response": {
-          "status": 400,
-          "headers": {
-              "Content-Type": "application/json"
-          },
-          "body": {
-              "error": "validDate is required"
-          }
+      "body": {
+        "error": "validDate is required"
       },
-      "providerStates": [
-          {
-              "name": "data count > 0"
+      "matchingRules": {
+        "header": {
+          "Content-Type": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+              }
+            ],
+            "combine": "AND"
           }
-      ]
+        }
+      }
+    },
+    "providerStates": [
+      {
+        "name": "data count > 0"
+      }
+    ]
   },
   {
-      "description": "a request with an invalid date parameter",
-      "request": {
-          "method": "GET",
-          "path": "/provider.json",
-          "query": {
-              "validDate": [
-                  "This is not a date"
-              ]
-          }
+    "description": "a request with an invalid date parameter",
+    "request": {
+      "method": "GET",
+      "path": "/provider.json",
+      "query": {
+        "validDate": [
+          "This is not a date"
+        ]
+      }
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": "application/json; charset=UTF-8"
       },
-      "response": {
-          "status": 400,
-          "headers": {
-              "Content-Type": "application/json"
-          },
-          "body": {
-              "error": "'This is not a date' is not a date"
-          }
+      "body": {
+        "error": "'This is not a date' is not a date"
       },
-      "providerStates": [
-          {
-              "name": "data count > 0"
+      "matchingRules": {
+        "header": {
+          "Content-Type": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+              }
+            ],
+            "combine": "AND"
           }
-      ]
+        }
+      }
+    },
+    "providerStates": [
+      {
+        "name": "data count > 0"
+      }
+    ]
   }
 ]
 ```
