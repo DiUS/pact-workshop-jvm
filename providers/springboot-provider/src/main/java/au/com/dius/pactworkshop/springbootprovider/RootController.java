@@ -23,7 +23,7 @@ public class RootController {
         LocalDateTime validTime = LocalDateTime.parse(validDate);
         Map<String, Serializable> map = new HashMap<>(3);
         map.put("test", "NO");
-        map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+        map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")));
         map.put("count", 1000);
         return map;
       } catch (DateTimeParseException e) {
@@ -33,5 +33,4 @@ public class RootController {
       throw new QueryParameterRequiredException("validDate is required");
     }
   }
-
 }
