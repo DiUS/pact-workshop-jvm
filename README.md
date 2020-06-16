@@ -1059,7 +1059,7 @@ Next, we update out root resource to use the value from the data store, and thro
           LocalDateTime validTime = LocalDateTime.parse(validDate.get());
           Map<String, Serializable> result = new HashMap<>(3);
           result.put("test", "NO");
-          result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")));
           result.put("count", DataStore.INSTANCE.getDataCount());
           return result;
         } catch (DateTimeParseException e) {
@@ -1165,7 +1165,7 @@ This controller will change the value of the datastore. We then use the datastor
           LocalDateTime validTime = LocalDateTime.parse(validDate);
           Map<String, Serializable> map = new HashMap<>(3);
           map.put("test", "NO");
-          map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          map.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")));
           map.put("count", DataStore.INSTANCE.getDataCount());
           return map;
         } catch (DateTimeParseException e) {
