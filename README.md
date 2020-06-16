@@ -199,51 +199,53 @@ real even with the tests all passing. Here is where Pact comes in.
 
 Let us add Pact to the project and write a consumer pact test.
 
-*consumer/src/test/groovy/au/com/dius/pactworkshop/consumer/ClientPactSpec.groovy*
+*consumer/src/test/java/au/com/dius/pactworkshop/consumer/ClientPactTest.java*
 
-```groovy
-class ClientPactSpec extends Specification {
+```java
+public class ClientPactTest {
 
-  private Client client
-  private LocalDateTime date
-  private PactBuilder provider
+  // This sets up a mock server that pretends to be our provider
+  @Rule
+  public PactProviderRule provider = new PactProviderRule("Our Provider", "localhost", 1234, this);
 
-  def setup() {
-    client = new Client('http://localhost:1234')
-    date = LocalDateTime.now()
-    provider = new PactBuilder()
-    provider {
-      serviceConsumer 'Our Little Consumer'
-      hasPactWith 'Our Provider'
-      port 1234
-    }
+  private LocalDateTime dateTime;
+  private String dateResult;
+
+  // This defines the expected interaction for out test
+  @Pact(provider = "Our Provider", consumer = "Our Little Consumer")
+  public RequestResponsePact pact(PactDslWithProvider builder) {
+    dateTime = LocalDateTime.now();
+    dateResult = "2013-08-16T15:31:20+10:00";
+    return builder
+      .given("data count > 0")
+      .uponReceiving("a request for json data")
+      .path("/provider.json")
+      .method("GET")
+      .query("validDate=" + dateTime.toString())
+      .willRespondWith()
+      .status(200)
+      .body(
+          new PactDslJsonBody()
+              .stringValue("test", "NO")
+              .stringValue("date", dateResult)
+              .numberValue("count", 100)
+      )
+      .toPact();
   }
 
-  def 'Pact with our provider'() {
-    given:
-    def json = [
-      test: 'NO',
-      date: '2013-08-16T15:31:20+10:00',
-      count: 100
-    ]
-    provider {
-      given('data count > 0')
-      uponReceiving('a request for json data')
-      withAttributes(path: '/provider.json', query: [validDate: date.toString()])
-      willRespondWith(status: 200, body: JsonOutput.toJson(json), headers: ['Content-Type': 'application/json'])
-    }
+  @Test
+  @PactVerification("Our Provider")
+  public void pactWithOurProvider() throws UnirestException {
+    // Set up our HTTP client class
+    Client client = new Client(provider.getUrl());
 
-    when:
-    def result
-    PactVerificationResult pactResult = provider.runTest {
-      result = client.fetchAndProcessData(date)
-    }
+    // Invoke out client
+    List<Object> result = client.fetchAndProcessData(dateTime);
 
-    then:
-    pactResult == PactVerificationResult.Ok.INSTANCE
-    result == [1, ZonedDateTime.parse(json.date)]
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0), is(1));
+    assertThat(result.get(1), is(ZonedDateTime.parse(dateResult)));
   }
-
 }
 ```
 
@@ -269,50 +271,63 @@ Generated pact file (*consumer/build/pacts/Our Little Consumer-Our Provider.json
 
 ```json
 {
-    "provider": {
-        "name": "Our Provider"
-    },
-    "consumer": {
-        "name": "Our Little Consumer"
-    },
-    "interactions": [
-        {
-            "description": "a request for json data",
-            "request": {
-                "method": "GET",
-                "path": "/provider.json",
-                "query": {
-                    "validDate": [
-                        "2018-04-10T12:34:28.839"
-                    ]
-                }
-            },
-            "response": {
-                "status": 200,
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": {
-                    "test": "NO",
-                    "date": "2013-08-16T15:31:20+10:00",
-                    "count": 100
-                }
-            },
-            "providerStates": [
-                {
-                    "name": "data count > 0"
-                }
-            ]
+  "provider": {
+    "name": "Our Provider"
+  },
+  "consumer": {
+    "name": "Our Little Consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request for json data",
+      "request": {
+        "method": "GET",
+        "path": "/provider.json",
+        "query": {
+          "validDate": [
+            "2020-06-16T11:49:49.485"
+          ]
         }
-    ],
-    "metadata": {
-        "pact-specification": {
-            "version": "3.0.0"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=UTF-8"
         },
-        "pact-jvm": {
-            "version": "3.5.14"
+        "body": {
+          "date": "2013-08-16T15:31:20+10:00",
+          "test": "NO",
+          "count": 100
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json(;\\s?charset=[\\w\\-]+)?"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
         }
+      },
+      "providerStates": [
+        {
+          "name": "data count > 0"
+        }
+      ]
     }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "4.1.2"
+    }
+  }
 }
 ```
 
