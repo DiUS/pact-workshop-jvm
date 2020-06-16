@@ -75,7 +75,7 @@ public class ClientPactTest {
             .path("/provider.json")
             .method("GET")
             .willRespondWith()
-            .status(404)
+            .status(400)
             .body(
                 new PactDslJsonBody().stringValue("error", "validDate is required")
             )
