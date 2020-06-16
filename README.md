@@ -814,49 +814,12 @@ After running our specs, the pact file will have 2 new interactions.
 
 ## Step 9 - Verify the provider with the missing/invalid date query parameter
    
-Let us run this updated pact file with our providers (use the `publishWorkshopPact` task). We get a 500 response as the provider can't handle the missing
+Let us run this updated pact file with our providers (first run the `publishWorkshopPact` task). We get a 500 response as the provider can't handle the missing
 or incorrect date.
 
-Here is the dropwizard test output:
+Here is the springboot test output:
 
 ```console
-Verifying a pact between Our Little Consumer and Our Provider
-  Given data count > 0
-  a request with a missing date parameter
-    returns a response which
-      has status code 400 (FAILED)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
-      has a matching body (FAILED)
-
-Failures:
-
-0) a request with a missing date parameter returns a response which has a matching body
-      $ -> Expected error='validDate is required' but was missing
-
-        Diff:
-
-        {
-        -    "error": "validDate is required"
-        +    "code": 500,
-        +    "message": "There was an error processing your request. It has been logged (ID 15c8b3719074eb84)."
-        }
-
-
-1) a request with a missing date parameter returns a response which has status code 400
-      assert expectedStatus == actualStatus
-             |              |  |
-             400            |  500
-                            false
-
-
-```
-
-and the springboot build output:
-
-```console
-> Task :providers:springboot-provider:pactVerify_Our_Provider
-
 Verifying a pact between Our Little Consumer and Our_Provider
   [Using File /home/ronald/Development/Projects/Pact/pact-workshop-jvm/providers/springboot-provider/build/pacts/Our Little Consumer-Our Provider.json]
   Given data count > 0
@@ -864,62 +827,35 @@ Verifying a pact between Our Little Consumer and Our_Provider
   a request for json data
     returns a response which
       has status code 200 (OK)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
       has a matching body (OK)
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
   a request with a missing date parameter
     returns a response which
-      has status code 400 (FAILED)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
+      has status code 404 (FAILED)
       has a matching body (FAILED)
   Given data count > 0
          WARNING: State Change ignored as there is no stateChange URL
   a request with an invalid date parameter
     returns a response which
       has status code 400 (FAILED)
-      includes headers
-        "Content-Type" with value "application/json" (OK)
       has a matching body (FAILED)
+
+NOTE: Skipping publishing of verification results as it has been disabled (pact.verifier.publishResults is not 'true')
+
 
 Failures:
 
-0) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0 returns a response which has status code 400
-      assert expectedStatus == actualStatus
-             |              |  |
-             400            |  500
-                            false
+1) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0
 
-1) Verifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with a missing date parameter Given data count > 0 returns a response which has a matching body
-      $.error -> Expected 'validDate is required' but received 'Internal Server Error'
+    1.1) StatusMismatch: expected status of 404 but was 500
 
+    1.2) BodyMismatch: $.error BodyMismatch: Expected 'validDate is required' (String) but received 'Internal Server Error' (String)
 
-2) Verifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameter Given data count > 0 returns a response which has status code 400
-      assert expectedStatus == actualStatus
-             |              |  |
-             400            |  500
-                            false
+    1.3) StatusMismatch: expected status of 400 but was 500
 
-3) Verifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameterVerifying a pact between Our Little Consumer and Our_Provider - a request with an invalid date parameter Given data count > 0 returns a response which has a matching body
-      $.error -> Expected ''This is not a date' is not a date' but received 'Internal Server Error'
+    1.4) BodyMismatch: $.error BodyMismatch: Expected ''This is not a date' is not a date' (String) but received 'Internal Server Error' (String)
 
-
-
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-There were 4 pact failures for provider Our_Provider
-
-* Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
-
-* Get more help at https://help.gradle.org
-
-BUILD FAILED in 8s
-5 actionable tasks: 4 executed, 1 up-to-date
 ```
 
 Time to update the providers to handle these cases.
