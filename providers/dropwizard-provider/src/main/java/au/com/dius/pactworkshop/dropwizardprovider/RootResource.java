@@ -26,7 +26,7 @@ public class RootResource {
           LocalDateTime validTime = LocalDateTime.parse(validDate.get());
           Map<String, Serializable> result = new HashMap<>(3);
           result.put("test", "NO");
-          result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")));
+          result.put("validDate", OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX")));
           result.put("count", DataStore.INSTANCE.getDataCount());
           return result;
         } catch (DateTimeParseException e) {
