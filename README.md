@@ -676,7 +676,7 @@ Here are the two additional tests:
             .path("/provider.json")
             .method("GET")
             .willRespondWith()
-            .status(404)
+            .status(400)
             .body(
                 new PactDslJsonBody().stringValue("error", "validDate is required")
             )
@@ -743,7 +743,7 @@ After running our specs, the pact file will have 2 new interactions.
       "path": "/provider.json"
     },
     "response": {
-      "status": 404,
+      "status": 400,
       "headers": {
         "Content-Type": "application/json; charset=UTF-8"
       },
