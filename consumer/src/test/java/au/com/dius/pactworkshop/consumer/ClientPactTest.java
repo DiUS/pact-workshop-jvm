@@ -22,7 +22,7 @@ public class ClientPactTest {
 
   // This sets up a mock server that pretends to be our provider
   @Rule
-  public PactProviderRule provider = new PactProviderRule("Our Provider", "localhost", 1234, this);
+  public PactProviderRule provider = new PactProviderRule("Our Provider", this);
 
   private LocalDateTime dateTime;
   private String dateResult;
