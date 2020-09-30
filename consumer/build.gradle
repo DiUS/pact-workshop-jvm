@@ -14,7 +14,7 @@ dependencies {
   compile 'org.apache.commons:commons-lang3:3.7'
 
   testCompile 'com.github.tomakehurst:wiremock:2.16.0'
-  testCompile 'au.com.dius.pact.consumer:junit:4.1.2'
+  testCompile 'au.com.dius.pact.consumer:junit:4.1.7'
 }
 
 pact {
