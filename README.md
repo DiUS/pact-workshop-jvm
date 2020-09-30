@@ -363,7 +363,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
