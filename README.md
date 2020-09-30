@@ -1048,7 +1048,7 @@ public class DataStore {
 }
 ```
 
-Next, we update out root resource to use the value from the data store, and throw an exception if there is no data.
+Next, we update our root resource to use the value from the data store, and throw an exception if there is no data.
 
 ```java
   @GET
