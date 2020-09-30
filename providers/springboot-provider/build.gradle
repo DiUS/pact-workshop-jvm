@@ -50,10 +50,4 @@ pact {
       hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
     }
   }
-
-  broker {
-    pactBrokerUrl = 'https://test.pact.dius.com.au'
-    pactBrokerUsername = project.pactBrokerUser
-    pactBrokerPassword = project.pactBrokerPassword
-  }
 }

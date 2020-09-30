@@ -1214,7 +1214,7 @@ First, in the consumer project we need to add the Gradle Pact plugin and tell it
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
 }
 
 ... omitted ...

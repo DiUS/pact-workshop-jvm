@@ -30,4 +30,5 @@ run {
 test {
   systemProperty 'pactBrokerUser', pactBrokerUser
   systemProperty 'pactBrokerPassword', pactBrokerPassword
+  systemProperty 'pactbroker.consumerversionselectors.tags', 'test,prod'
 }
