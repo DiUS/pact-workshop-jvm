@@ -256,7 +256,7 @@ public class ClientPactTest {
 ![Test using Pact](diagrams/step3_pact.png)
 
 
-This test starts a mock server on port 1234 that pretends to be our provider. To get this to work we needed to update
+This test starts a mock server on a random port that pretends to be our provider. To get this to work we needed to update
 our consumer to pass in the URL of the provider. We also updated the `fetchAndProcessData` method to pass in the
 query parameter.
 
@@ -366,7 +366,7 @@ plugin and the spawn plugin to the project and configure them.
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 ```
@@ -1050,7 +1050,7 @@ public class DataStore {
 }
 ```
 
-Next, we update out root resource to use the value from the data store, and throw an exception if there is no data.
+Next, we update our root resource to use the value from the data store, and throw an exception if there is no data.
 
 ```java
   @GET
@@ -1216,7 +1216,7 @@ First, in the consumer project we need to add the Gradle Pact plugin and tell it
 
 ```groovy
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
 }
 
 ... omitted ...

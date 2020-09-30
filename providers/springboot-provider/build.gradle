@@ -3,12 +3,12 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.1.RELEASE")
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.3.1.RELEASE")
   }
 }
 
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 
@@ -51,11 +51,5 @@ pact {
         hasPactsFromPactBroker("https://test.pact.dius.com.au", authentication: ['Basic', pactBrokerUser, pactBrokerPassword])
       }
     }
-  }
-
-  broker {
-    pactBrokerUrl = 'https://test.pact.dius.com.au'
-    pactBrokerUsername = project.pactBrokerUser
-    pactBrokerPassword = project.pactBrokerPassword
   }
 }

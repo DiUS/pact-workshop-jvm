@@ -1,5 +1,5 @@
 plugins {
-  id "au.com.dius.pact" version "4.1.2"
+  id "au.com.dius.pact" version "4.1.7"
 }
 
 apply plugin: 'application'
@@ -14,7 +14,7 @@ dependencies {
   compile 'org.apache.commons:commons-lang3:3.7'
 
   testCompile 'com.github.tomakehurst:wiremock:2.16.0'
-  testCompile 'au.com.dius.pact.consumer:junit:4.1.2'
+  testCompile 'au.com.dius.pact.consumer:junit:4.1.7'
 }
 
 pact {
@@ -22,5 +22,6 @@ pact {
     pactBrokerUrl = 'https://test.pact.dius.com.au'
     pactBrokerUsername = project.pactBrokerUser
     pactBrokerPassword = project.pactBrokerPassword
+    tags = ['test']
   }
 }
