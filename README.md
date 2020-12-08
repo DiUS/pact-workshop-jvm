@@ -1,10 +1,45 @@
-# Example JVM project for the Pact workshop
+## Introduction
+
+This workshop is aimed at demonstrating core features and benefits of contract testing with Pact.
+
+Whilst contract testing can be applied retrospectively to systems, we will follow the [consumer driven contracts](https://martinfowler.com/articles/consumerDrivenContracts.html) approach in this workshop - where a new consumer and provider are created in parallel to evolve a service over time, especially where there is some uncertainty with what is to be built.
+
+This workshop should take from 1 to 2 hours, depending on how deep you want to go into each topic.
+
+**Example project overview**
 
 This workshop is setup with a number of steps that can be run through. Each step is in a branch, so to run through a
 step of the workshop just check out the branch for that step (i.e. `git checkout step1`).
 
 This project has 3 components, a consumer project and two service providers, one Dropwizard and one
 Springboot service that the consumer will interaction with.
+
+**Workshop outline**:
+
+- [step 1: **Simple Consumer calling Provider**](https://github.com/DiUS/pact-workshop-jvm#--simple-consumer-calling-provider): Create our consumer before the Provider API even exists
+- [step 2: **Client Tested but integration fails**](https://github.com/DiUS/pact-workshop-jvm#--client-tested-but-integration-fails): Write a unit test for our consumer
+- [step 3: **Pact to the rescue**](https://github.com/DiUS/pact-workshop-jvm#--pact-to-the-rescue): Write a Pact test for our consumer
+- [step 4: **Verify pact against provider**](https://github.com/DiUS/pact-workshop-jvm#--verify-pact-against-provider): Verify the consumer pact with the Provider API (Gradle)
+- [step 5: **Verify the provider with a test**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-provider-with-a-test): Verify the consumer pact with the Provider API (JUnit)
+- [step 6: **Back to the client we go**](https://github.com/DiUS/pact-workshop-jvm#--back-to-the-client-we-go): Fix the consumer's bad assumptions about the Provider
+- [step 7: **Verify the providers again**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-providers-again): Update the provider  build
+- [step 8: **Test for the missing query parameter**](https://github.com/DiUS/pact-workshop-jvm#--test-for-the-missing-query-parameter): Test unhappy path of missing query string
+- [step 9: **Verify the provider with the missing/invalid date query parameter**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-provider-with-the-missing/invalid-date-query-parameter): Verify provider's ability to handle the missing query string
+- [step 10: **Update the providers to handle the missing/invalid query parameters**](https://github.com/DiUS/pact-workshop-jvm#--update-the-providers-to-handle-the-missing/invalid-query-parameters): Update provider to handlre mising query string
+- [step 11: **Provider states**](https://github.com/DiUS/pact-workshop-jvm#--provider-states): Write a pact test for the `404` case
+- [step 12: **provider states for the providers**](https://github.com/DiUS/pact-workshop-jvm#--provider-states-for-the-providers): Update API to handle `404` case
+- [step 13: **Using a Pact Broker**](https://github.com/DiUS/pact-workshop-jvm#--provider-states-for-the-providers): Implement a broker workflow for integration with CI/CD
+
+_NOTE: Each step is tied to, and must be run within, a git branch, allowing you to progress through each stage incrementally. For example, to move to step 2 run the following: `git checkout step2`_
+
+## Learning objectives
+
+If running this as a team workshop format, you may want to take a look through the [learning objectives](./LEARNING.md).
+
+## Requirements
+
+[Java](https://java.com/en/download/) (version 1.8+)
+[Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Step 1 - Simple Consumer calling Provider
 
