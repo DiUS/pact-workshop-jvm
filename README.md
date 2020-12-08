@@ -13,19 +13,19 @@ Springboot service that the consumer will interaction with.
 
 **Workshop outline**:
 
-- [step 1: **Simple Consumer calling Provider**](https://github.com/DiUS/pact-workshop-jvm#--simple-consumer-calling-provider): Create our consumer before the Provider API even exists
-- [step 2: **Client Tested but integration fails**](https://github.com/DiUS/pact-workshop-jvm#--client-tested-but-integration-fails): Write a unit test for our consumer
-- [step 3: **Pact to the rescue**](https://github.com/DiUS/pact-workshop-jvm#--pact-to-the-rescue): Write a Pact test for our consumer
-- [step 4: **Verify pact against provider**](https://github.com/DiUS/pact-workshop-jvm#--verify-pact-against-provider): Verify the consumer pact with the Provider API (Gradle)
-- [step 5: **Verify the provider with a test**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-provider-with-a-test): Verify the consumer pact with the Provider API (JUnit)
-- [step 6: **Back to the client we go**](https://github.com/DiUS/pact-workshop-jvm#--back-to-the-client-we-go): Fix the consumer's bad assumptions about the Provider
-- [step 7: **Verify the providers again**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-providers-again): Update the provider  build
-- [step 8: **Test for the missing query parameter**](https://github.com/DiUS/pact-workshop-jvm#--test-for-the-missing-query-parameter): Test unhappy path of missing query string
-- [step 9: **Verify the provider with the missing/invalid date query parameter**](https://github.com/DiUS/pact-workshop-jvm#--verify-the-provider-with-the-missing/invalid-date-query-parameter): Verify provider's ability to handle the missing query string
-- [step 10: **Update the providers to handle the missing/invalid query parameters**](https://github.com/DiUS/pact-workshop-jvm#--update-the-providers-to-handle-the-missing/invalid-query-parameters): Update provider to handlre mising query string
-- [step 11: **Provider states**](https://github.com/DiUS/pact-workshop-jvm#--provider-states): Write a pact test for the `404` case
-- [step 12: **provider states for the providers**](https://github.com/DiUS/pact-workshop-jvm#--provider-states-for-the-providers): Update API to handle `404` case
-- [step 13: **Using a Pact Broker**](https://github.com/DiUS/pact-workshop-jvm#--provider-states-for-the-providers): Implement a broker workflow for integration with CI/CD
+- [step 1: **Simple Consumer calling Provider**](https://github.com/DiUS/pact-workshop-jvm#step-1---simple-consumer-calling-provider): Create our consumer before the Provider API even exists
+- [step 2: **Client Tested but integration fails**](https://github.com/DiUS/pact-workshop-jvm#step-2---client-tested-but-integration-fails): Write a unit test for our consumer
+- [step 3: **Pact to the rescue**](https://github.com/DiUS/pact-workshop-jvm#step-3---pact-to-the-rescue): Write a Pact test for our consumer
+- [step 4: **Verify pact against provider**](https://github.com/DiUS/pact-workshop-jvm#step-4---verify-pact-against-provider): Verify the consumer pact with the Provider API (Gradle)
+- [step 5: **Verify the provider with a test**](https://github.com/DiUS/pact-workshop-jvm#step-5---verify-the-provider-with-a-test): Verify the consumer pact with the Provider API (JUnit)
+- [step 6: **Back to the client we go**](https://github.com/DiUS/pact-workshop-jvm#step-6---back-to-the-client-we-go): Fix the consumer's bad assumptions about the Provider
+- [step 7: **Verify the providers again**](https://github.com/DiUS/pact-workshop-jvm#step-7---verify-the-providers-again): Update the provider  build
+- [step 8: **Test for the missing query parameter**](https://github.com/DiUS/pact-workshop-jvm#step-8---test-for-the-missing-query-parameter): Test unhappy path of missing query string
+- [step 9: **Verify the provider with the missing/invalid date query parameter**](https://github.com/DiUS/pact-workshop-jvm#step-9---verify-the-provider-with-the-missinginvalid-date-query-parameter): Verify provider's ability to handle the missing query string
+- [step 10: **Update the providers to handle the missing/invalid query parameters**](https://github.com/DiUS/pact-workshop-jvm#step-10---update-the-providers-to-handle-the-missinginvalid-query-parameters): Update provider to handlre mising query string
+- [step 11: **Provider states**](https://github.com/DiUS/pact-workshop-jvm#step-11---provider-states): Write a pact test for the `404` case
+- [step 12: **provider states for the providers**](https://github.com/DiUS/pact-workshop-jvm#step-12---provider-states-for-the-providers): Update API to handle `404` case
+- [step 13: **Using a Pact Broker**](https://github.com/DiUS/pact-workshop-jvm#step-13---using-a-pact-broker): Implement a broker workflow for integration with CI/CD
 
 _NOTE: Each step is tied to, and must be run within, a git branch, allowing you to progress through each stage incrementally. For example, to move to step 2 run the following: `git checkout step2`_
 
