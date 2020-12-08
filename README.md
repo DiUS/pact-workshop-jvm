@@ -80,6 +80,10 @@ Running the client with either provider works nicely. For example, start the dro
 $ ./gradlew :providers:dropwizard-provider:run
 ```
 
+_NOTE_: this task won't complete, it will get to 75% and remain that way until you shutdown the process: `<=========----> 75% EXECUTING [59s]`)
+
+(to start the Spring boot provider instead, you would run `./gradlew :providers:springboot-provider:bootRun`).
+
 Once the provider has successfully initialized, open another terminal session and run the consumer:
 
 ```console
