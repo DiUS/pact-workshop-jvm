@@ -38,8 +38,8 @@ If running this as a team workshop format, you may want to take a look through t
 
 ## Requirements
 
-[Java](https://java.com/en/download/) (version 1.8+)
-[Docker Compose](https://docs.docker.com/compose/install/)
+- [Java](https://java.com/en/download/) (version 1.8+)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Step 1 - Simple Consumer calling Provider
 
