@@ -28,6 +28,9 @@ run {
 }
 
 test {
+  systemProperty 'pactBrokerHost', pactBrokerHost
+  systemProperty 'pactBrokerScheme', pactBrokerScheme
+  systemProperty 'pactBrokerPort', pactBrokerPort
   systemProperty 'pactBrokerUser', pactBrokerUser
   systemProperty 'pactBrokerPassword', pactBrokerPassword
   systemProperty 'pactbroker.consumerversionselectors.tags', 'test,prod'
