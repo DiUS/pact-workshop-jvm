@@ -1249,6 +1249,21 @@ Running the Gradle pact verification now passes.
 We've been publishing our pacts from the consumer project by coping the files over to the provider project, but we can
 use a Pact Broker to do this instead.
 
+### Running the Pact Broker locally or against a hosted broker (e.g. Pactflow)
+
+If you'd like to play along locally we have a docker-compose example you can use. Start it by running:
+
+```
+docker-compose up
+```
+
+Afterwards, it should be running on port `9292`. Head to `http://localhost:9292` and you should see the OSS pact broker running.
+
+The credentials are `pact_workshop` / `pact_workshop`.
+
+The project properties (`gradle.properties`) defaults to using this with the relevant credentials. Update as required to your own hosted platform such as
+or your pactflow.io account.
+
 ### Consumer
 
 First, in the consumer project we need to add the Gradle Pact plugin and tell it about our broker.

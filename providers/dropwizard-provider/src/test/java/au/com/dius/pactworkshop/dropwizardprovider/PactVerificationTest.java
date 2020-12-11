@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(PactRunner.class)
 @Provider("Our Provider")
-@PactBroker(host = "test.pact.dius.com.au", scheme = "https", port = "443",
+@PactBroker(host = "${pactBrokerHost}", scheme = "${pactBrokerScheme}", port = "${pactBrokerPort}",
   authentication = @PactBrokerAuth(username = "${pactBrokerUser}", password = "${pactBrokerPassword}"))
 public class PactVerificationTest {
   @ClassRule
