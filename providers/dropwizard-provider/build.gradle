@@ -34,4 +34,6 @@ test {
   systemProperty 'pactBrokerUser', pactBrokerUser
   systemProperty 'pactBrokerPassword', pactBrokerPassword
   systemProperty 'pactbroker.consumerversionselectors.tags', 'test,prod'
+  systemProperty 'pact.provider.version', '1.0.0'
+  systemProperty 'pact.verifier.publishResults', 'true'
 }
