@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-  id "au.com.dius.pact" version "4.1.7"
+  id "au.com.dius.pact" version "4.1.19"
   id "com.wiredforcode.spawn" version "0.8.2"
 }
 
