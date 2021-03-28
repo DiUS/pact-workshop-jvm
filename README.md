@@ -12,7 +12,7 @@ This workshop is setup with a number of steps that can be run through. Each step
 step of the workshop just check out the branch for that step (i.e. `git checkout step1`).
 
 This project has 3 components, a consumer project and two service providers, one Dropwizard and one
-Springboot service that the consumer will interaction with.
+Springboot service that the consumer will interact with.
 
 **Workshop outline**:
 
