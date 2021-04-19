@@ -1,3 +1,7 @@
+## Important note
+
+This repository has been archived, please use the latest workshop here: https://github.com/pact-foundation/pact-workshop-jvm-spring
+
 ## Introduction
 
 This workshop is aimed at demonstrating core features and benefits of contract testing with Pact.
