@@ -1,4 +1,4 @@
-## Important note
+## ⚠️ Important note ⚠️
 
 This repository has been archived, please use the latest workshop here: https://github.com/pact-foundation/pact-workshop-jvm-spring
 
